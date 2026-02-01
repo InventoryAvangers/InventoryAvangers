@@ -10,3 +10,9 @@ dotnet-backend/bin/
 dotnet-backend/obj/
 *.user
 dotnet-backend/*.txt
+<<<<<<< HEAD
+=======
+
+# Git history generator script
+generate_git.js
+>>>>>>> 6ab4e8b (Initial commit: project structure)
