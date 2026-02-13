@@ -1,0 +1,16 @@
+/* DashboardLayout — main layout wrapper with sidebar and topbar offsets */
+
+.dashboard-layout {
+  min-height: 100vh;
+  background-color: var(--bg-base);
+}
+
+.dashboard-main {
+  margin-left: 250px;
+  padding-top: 60px;
+  min-height: 100vh;
+}
+
+.dashboard-content {
+  padding: 1.5rem;
+}
