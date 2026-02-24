@@ -94,7 +94,11 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> SalesReport([FromQuery] string? startDate, [FromQuery] string? endDate, [FromQuery] string? paymentMethod)
     {
         if (UserRole == "superuser") return StatusCode(403, new { success = false, message = "Forbidden: superuser cannot access store-level data" });
+<<<<<<< HEAD
         if (UserRole != "owner" && UserRole != "manager") return StatusCode(403, new { success = false, message = "Forbidden" });
+=======
+        if (UserRole != "owner" && UserRole != "manager" && UserRole != "staff") return StatusCode(403, new { success = false, message = "Forbidden" });
+>>>>>>> 1a0c1c0 (feat(dash): add reports aggregation controller and per-store stats endpoint)
 
         var filter = Builders<Sale>.Filter.Empty;
         if (!string.IsNullOrWhiteSpace(UserStoreId))
