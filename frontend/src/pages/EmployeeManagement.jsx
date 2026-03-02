@@ -34,6 +34,10 @@ export default function EmployeeManagement() {
 
   const [employees, setEmployees] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
+<<<<<<< HEAD
+=======
+  const [pendingRequests, setPendingRequests] = useState([]);
+>>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -58,6 +62,13 @@ export default function EmployeeManagement() {
         try {
           const pending = await apiGet('/approvals/pending-users');
           setPendingUsers(Array.isArray(pending) ? pending : (pending.data || []));
+<<<<<<< HEAD
+=======
+
+          const approvals = await apiGet('/approvals');
+          const approvalsArr = Array.isArray(approvals) ? approvals : (approvals.data || []);
+          setPendingRequests(approvalsArr.filter(a => a.status === 'pending'));
+>>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
         } catch { /* non-critical */ }
       }
     } catch (err) {
@@ -108,6 +119,20 @@ export default function EmployeeManagement() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const handleRequestAction = async (id, status) => {
+    if (status === 'rejected' && !window.confirm('Reject this request?')) return;
+    try {
+      await apiPut(`/approvals/${id}`, { status });
+      showAlert(`Request ${status}.`, 'success');
+      await loadData();
+    } catch (err) {
+      showAlert(apiErrMsg(err));
+    }
+  };
+
+>>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
   return (
     <DashboardLayout>
       <div className="emp-mgmt-page-header">
@@ -177,6 +202,61 @@ export default function EmployeeManagement() {
             </div>
           )}
 
+<<<<<<< HEAD
+=======
+          {/* ── Pending Requests Section (Owner Approvals) ── */}
+          {isOwner && pendingRequests.length > 0 && (
+            <div className="emp-mgmt-pending-section" style={{ marginTop: '2rem' }}>
+              <div className="emp-mgmt-pending-header">
+                <span className="emp-mgmt-pending-icon"><FiClock size={16} /></span>
+                <h3 className="emp-mgmt-pending-title">
+                  Pending Action Requests
+                  <span className="emp-mgmt-pending-count">
+                    {pendingRequests.length}
+                  </span>
+                </h3>
+              </div>
+              <div className="table-wrapper">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Action</th>
+                      <th>Description</th>
+                      <th>Requested</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingRequests.map((req) => (
+                      <tr key={req._id}>
+                        <td><span className="badge badge-warning" style={{textTransform:'capitalize'}}>{req.action.replace(/_/g, ' ')}</span></td>
+                        <td>{req.description}</td>
+                        <td>{fmtDate(req.createdAt)}</td>
+                        <td>
+                          <div className="emp-mgmt-action-btns">
+                            <button
+                              onClick={() => handleRequestAction(req._id, 'approved')}
+                              className="btn btn-success btn-sm"
+                            >
+                              <FiCheck size={12} /> Approve
+                            </button>
+                            <button
+                              onClick={() => handleRequestAction(req._id, 'rejected')}
+                              className="btn btn-danger btn-sm"
+                            >
+                              <FiX size={12} /> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+>>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
           {/* ── Active Employees ── */}
           {employees.length === 0 ? (
             <div className="card emp-mgmt-empty-card">
