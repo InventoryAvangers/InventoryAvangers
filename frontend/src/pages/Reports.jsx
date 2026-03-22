@@ -32,6 +32,7 @@ export default function Reports() {
   const user = useAuthStore((s) => s.user);
   const shopBranding = useAuthStore((s) => s.shopBranding);
   const isOwner = user?.role === 'owner';
+  const isStaff = user?.role === 'staff';
   const currency = user?.currency || 'INR';
   const fmt = (v) => formatCurrency(v, currency);
 
@@ -108,27 +109,29 @@ export default function Reports() {
     y += 10;
     doc.setTextColor(0);
 
-    // Revenue Summary
-    doc.setFontSize(13);
-    doc.setFont(undefined, 'bold');
-    doc.text('Revenue Summary', margin, y); y += 7;
+    if (!isStaff) {
+      // Revenue Summary
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.text('Revenue Summary', margin, y); y += 7;
 
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    const summaryRows = [
-      ['Gross Revenue', fmt(summary.grossRevenue ?? summary.totalRevenue)],
-      ['Total Returned', fmt(summary.totalReturned ?? 0)],
-      ['Net Revenue', fmt(summary.totalRevenue)],
-      ['Total Orders', String(summary.totalOrders)],
-      ['Estimated Profit', fmt(summary.totalProfit)],
-      ['Profit Margin', `${summary.profitMargin}%`],
-    ];
-    summaryRows.forEach(([k, v]) => {
-      doc.text(k + ':', margin, y);
-      doc.text(v, margin + 60, y);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      const summaryRows = [
+        ['Gross Revenue', fmt(summary.grossRevenue ?? summary.totalRevenue)],
+        ['Total Returned', fmt(summary.totalReturned ?? 0)],
+        ['Net Revenue', fmt(summary.totalRevenue)],
+        ['Total Orders', String(summary.totalOrders)],
+        ['Estimated Profit', fmt(summary.totalProfit)],
+        ['Profit Margin', `${summary.profitMargin}%`],
+      ];
+      summaryRows.forEach(([k, v]) => {
+        doc.text(k + ':', margin, y);
+        doc.text(v, margin + 60, y);
+        y += 6;
+      });
       y += 6;
-    });
-    y += 6;
+    }
 
     // Sales Transactions
     doc.setFontSize(13);
@@ -169,20 +172,22 @@ export default function Reports() {
 
     y += 8;
 
-    // Profit Margin Breakdown
-    if (y > 250) { doc.addPage(); y = margin; }
-    doc.setFontSize(13);
-    doc.setFont(undefined, 'bold');
-    doc.text('Profit Margin Breakdown', margin, y); y += 7;
+    if (!isStaff) {
+      // Profit Margin Breakdown
+      if (y > 250) { doc.addPage(); y = margin; }
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.text('Profit Margin Breakdown', margin, y); y += 7;
 
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Gross Revenue: ${fmt(summary.grossRevenue ?? summary.totalRevenue)}`, margin, y); y += 6;
-    doc.text(`Total Returned: ${fmt(summary.totalReturned ?? 0)}`, margin, y); y += 6;
-    doc.text(`Net Revenue: ${fmt(summary.totalRevenue)}`, margin, y); y += 6;
-    doc.text(`Estimated Profit (20%): ${fmt(summary.totalProfit)}`, margin, y); y += 6;
-    doc.text(`Profit Margin: ${summary.profitMargin}%`, margin, y); y += 6;
-    doc.text('Note: Profit is estimated at 20% of net revenue.', margin, y);
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(`Gross Revenue: ${fmt(summary.grossRevenue ?? summary.totalRevenue)}`, margin, y); y += 6;
+      doc.text(`Total Returned: ${fmt(summary.totalReturned ?? 0)}`, margin, y); y += 6;
+      doc.text(`Net Revenue: ${fmt(summary.totalRevenue)}`, margin, y); y += 6;
+      doc.text(`Estimated Profit (20%): ${fmt(summary.totalProfit)}`, margin, y); y += 6;
+      doc.text(`Profit Margin: ${summary.profitMargin}%`, margin, y); y += 6;
+      doc.text('Note: Profit is estimated at 20% of net revenue.', margin, y);
+    }
 
     doc.save(fileName);
   };
@@ -246,36 +251,38 @@ export default function Reports() {
       </div>
 
       {/* KPI Cards */}
-      <div className="reports-kpi-grid">
-        <Card
-          title="Gross Revenue"
-          value={fmt(summary.grossRevenue ?? summary.totalRevenue)}
-          icon={<FiDollarSign size={18} />}
-          color="indigo"
-        />
-        <Card
-          title="Net Revenue"
-          value={fmt(summary.totalRevenue)}
-          icon={<FiDollarSign size={18} />}
-          color="emerald"
-        >
-          {summary.totalReturned > 0 && (
-            <p className="reports-kpi-returned">−{fmt(summary.totalReturned)} returned</p>
-          )}
-        </Card>
-        <Card
-          title="Profit"
-          value={fmt(summary.totalProfit)}
-          icon={<FiTrendingUp size={18} />}
-          color="blue"
-        />
-        <Card
-          title="Profit Margin"
-          value={`${summary.profitMargin}%`}
-          icon={<FiPercent size={18} />}
-          color="amber"
-        />
-      </div>
+      {!isStaff && (
+        <div className="reports-kpi-grid">
+          <Card
+            title="Gross Revenue"
+            value={fmt(summary.grossRevenue ?? summary.totalRevenue)}
+            icon={<FiDollarSign size={18} />}
+            color="indigo"
+          />
+          <Card
+            title="Net Revenue"
+            value={fmt(summary.totalRevenue)}
+            icon={<FiDollarSign size={18} />}
+            color="emerald"
+          >
+            {summary.totalReturned > 0 && (
+              <p className="reports-kpi-returned">−{fmt(summary.totalReturned)} returned</p>
+            )}
+          </Card>
+          <Card
+            title="Profit"
+            value={fmt(summary.totalProfit)}
+            icon={<FiTrendingUp size={18} />}
+            color="blue"
+          />
+          <Card
+            title="Profit Margin"
+            value={`${summary.profitMargin}%`}
+            icon={<FiPercent size={18} />}
+            color="amber"
+          />
+        </div>
+      )}
 
       {/* Sales Table */}
       <div className="card reports-table-card">
