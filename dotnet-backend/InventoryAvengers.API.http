@@ -1,0 +1,18 @@
+@InventoryAvengers.API_HostAddress = http://localhost:5000
+
+### Health check — GET /api/stores/public (unauthenticated)
+GET {{InventoryAvengers.API_HostAddress}}/api/stores/public
+Accept: application/json
+
+###
+
+### Login
+POST {{InventoryAvengers.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "owner@example.com",
+  "password": "Password1!"
+}
+
+###
