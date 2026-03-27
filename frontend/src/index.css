@@ -1,0 +1,3 @@
+/* index.css — entry point for global styles.
+   All component classes, CSS variables, and utilities are in styles/global.css. */
+@import './styles/global.css';

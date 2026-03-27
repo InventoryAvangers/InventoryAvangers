@@ -1,0 +1,109 @@
+/* Returns page — return form card and history table */
+
+.returns-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .returns-layout {
+    grid-template-columns: 1fr 2fr;
+  }
+}
+
+/* Return form card */
+.returns-form-card {
+  padding: 1.5rem;
+}
+
+.returns-form-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.returns-lookup-group {
+  margin-bottom: 1.25rem;
+}
+
+.returns-lookup-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.returns-lookup-row .form-control {
+  flex: 1;
+}
+
+.returns-sale-info {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #eef2ff;
+  border: 1px solid #e0e7ff;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  color: #3730a3;
+}
+
+.returns-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.returns-submit-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* History panel */
+.returns-history-card {
+  overflow: hidden;
+}
+
+.returns-history-header {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.returns-history-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.returns-col-id {
+  font-family: monospace;
+  font-size: var(--font-size-xs);
+  color: #94a3b8;
+}
+
+.returns-col-refund {
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.returns-col-date {
+  color: #94a3b8;
+  font-size: var(--font-size-xs);
+}
+
+.returns-empty-cell {
+  text-align: center;
+  padding: 2.5rem 0;
+  color: #94a3b8;
+}
+
+.btn-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+}
