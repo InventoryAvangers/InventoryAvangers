@@ -1,0 +1,125 @@
+/* OwnerStores page — store card grid, store modals */
+
+.owner-stores-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.owner-stores-page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.owner-stores-page-subtitle {
+  font-size: var(--font-size-sm);
+  color: #64748b;
+  margin: 0;
+}
+
+.owner-stores-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .owner-stores-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .owner-stores-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.owner-store-card {
+  padding: 1.25rem;
+}
+
+.owner-store-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.owner-store-card-name {
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem;
+}
+
+.owner-store-card-info {
+  font-size: var(--font-size-xs);
+  color: #64748b;
+  margin: 0 0 0.25rem;
+}
+
+.owner-store-card-manager {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-xs);
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.owner-store-card-no-manager {
+  font-style: italic;
+  color: #94a3b8;
+}
+
+.owner-store-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Empty state */
+.owner-stores-empty-card {
+  padding: 3rem;
+  text-align: center;
+}
+
+.owner-stores-empty-icon {
+  color: #cbd5e1;
+  margin: 0 auto 0.75rem;
+}
+
+.owner-stores-empty-text {
+  color: #64748b;
+}
+
+/* Modal forms */
+.owner-stores-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-control--uppercase {
+  text-transform: uppercase;
+}
+
+.owner-stores-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.owner-stores-form-footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}
+
+.owner-stores-assign-intro {
+  font-size: var(--font-size-sm);
+  color: #475569;
+}
