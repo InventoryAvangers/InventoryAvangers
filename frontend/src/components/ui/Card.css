@@ -1,0 +1,39 @@
+/* Card — KPI summary card component */
+
+.card-kpi {
+  padding: 1.25rem;
+}
+
+.card-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.card-kpi-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.card-kpi-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Color variants */
+.card-kpi-icon--indigo  { background-color: #eef2ff; color: #4f46e5; }
+.card-kpi-icon--emerald { background-color: #d1fae5; color: #059669; }
+.card-kpi-icon--blue    { background-color: #dbeafe; color: #2563eb; }
+.card-kpi-icon--amber   { background-color: #fef3c7; color: #d97706; }
+
+.card-kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}

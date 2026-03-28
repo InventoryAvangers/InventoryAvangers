@@ -1,0 +1,51 @@
+/* NoPermission — feature not available on current plan */
+
+.no-perm-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.no-perm-page--light { background-color: #f8fafc; }
+.no-perm-page--dark  { background-color: #0f172a; }
+
+.no-perm-content {
+  text-align: center;
+  max-width: 28rem;
+}
+
+.no-perm-icon {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.no-perm-icon--light { background-color: #fef3c7; color: #f59e0b; }
+.no-perm-icon--dark  { background-color: #334155; color: #fbbf24; }
+
+.no-perm-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+}
+
+.no-perm-title--light { color: #1e293b; }
+.no-perm-title--dark  { color: #f1f5f9; }
+
+.no-perm-text {
+  margin: 0 0 2rem;
+  line-height: 1.6;
+}
+
+.no-perm-text--light { color: #64748b; }
+.no-perm-text--dark  { color: #94a3b8; }
+
+.no-perm-back-btn {
+  justify-content: center;
+}

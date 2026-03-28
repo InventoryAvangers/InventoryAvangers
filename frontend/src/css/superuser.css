@@ -1,0 +1,524 @@
+/* =====================================================================
+   Superuser Panel CSS
+   ===================================================================== */
+
+/* ---- Layout ---- */
+.superuser-page {
+  max-width: 1100px;
+}
+
+/* ---- Stats Bar ---- */
+.superuser-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.superuser-stat-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.superuser-stat-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.superuser-stat-card__icon--yellow { background: #fef9c3; color: #ca8a04; }
+.superuser-stat-card__icon--blue   { background: #dbeafe; color: #2563eb; }
+.superuser-stat-card__icon--green  { background: #d1fae5; color: #059669; }
+.superuser-stat-card__icon--red    { background: #fee2e2; color: #dc2626; }
+
+.superuser-stat-card__value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.superuser-stat-card__label {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ---- Tab Bar ---- */
+.superuser-tabs {
+  display: flex;
+  gap: 4px;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.superuser-tab {
+  flex: 1;
+  padding: 9px 16px;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+  color: #64748b;
+}
+
+.superuser-tab--active {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* ---- Card Table ---- */
+.superuser-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.superuser-card__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.superuser-card__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+/* ---- Request Row ---- */
+.superuser-request-row {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.superuser-request-row:last-child {
+  border-bottom: none;
+}
+
+.superuser-request-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.superuser-request-row__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.superuser-request-row__email {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.superuser-request-row__business {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.superuser-request-row__meta {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin-top: 4px;
+}
+
+.superuser-request-row__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ---- Action Buttons ---- */
+.superuser-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+}
+
+.superuser-btn--approve {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.superuser-btn--approve:hover {
+  background: #a7f3d0;
+}
+
+.superuser-btn--reject {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.superuser-btn--reject:hover {
+  background: #fecaca;
+}
+
+.superuser-btn--activate {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.superuser-btn--activate:hover {
+  background: #bfdbfe;
+}
+
+.superuser-btn--deactivate {
+  background: #fef9c3;
+  color: #78350f;
+}
+
+.superuser-btn--deactivate:hover {
+  background: #fde68a;
+}
+
+.superuser-btn--delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.superuser-btn--delete:hover {
+  background: #fecaca;
+}
+
+/* ---- Owner Row ---- */
+.superuser-owner-row {
+  padding: 14px 20px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.superuser-owner-row:last-child {
+  border-bottom: none;
+}
+
+.superuser-owner-row__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.superuser-owner-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.superuser-owner-row__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.superuser-owner-row__email {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.superuser-owner-row__store {
+  font-size: 11px;
+  color: #4f46e5;
+  margin-top: 2px;
+}
+
+/* ---- Status Badge ---- */
+.superuser-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.superuser-status--approved  { background: #d1fae5; color: #065f46; }
+.superuser-status--pending   { background: #fef9c3; color: #78350f; }
+.superuser-status--rejected  { background: #fee2e2; color: #991b1b; }
+.superuser-status--deactivated { background: #f1f5f9; color: #64748b; }
+
+/* ---- Empty State ---- */
+.superuser-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.superuser-empty svg {
+  margin: 0 auto 12px;
+  display: block;
+  opacity: 0.4;
+}
+
+/* ---- New Status Variants ---- */
+.superuser-status--trial     { background: #e0f2fe; color: #0369a1; }
+.superuser-status--expired   { background: #f1f5f9; color: #64748b; }
+.superuser-status--suspended { background: #fef9c3; color: #854d0e; }
+.superuser-status--banned    { background: #fce7f3; color: #9d174d; }
+.superuser-status--active    { background: #d1fae5; color: #065f46; }
+.superuser-status--inactive  { background: #f1f5f9; color: #94a3b8; }
+.superuser-status--superuser { background: #ede9fe; color: #6d28d9; }
+.superuser-status--owner     { background: #dbeafe; color: #1e40af; }
+.superuser-status--manager   { background: #fef9c3; color: #78350f; }
+.superuser-status--staff     { background: #f1f5f9; color: #475569; }
+.superuser-status--system    { background: #f0fdf4; color: #166534; }
+.superuser-status--cancelled { background: #f1f5f9; color: #94a3b8; }
+
+/* ---- Plan Badges ---- */
+.superuser-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge-free  { background: #f1f5f9; color: #64748b; }
+.badge-basic { background: #dbeafe; color: #1e40af; }
+.badge-pro   { background: #ede9fe; color: #6d28d9; }
+
+/* ---- Shop Row ---- */
+.superuser-shop-row {
+  padding: 14px 20px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: background 0.1s;
+}
+.superuser-shop-row:last-child { border-bottom: none; }
+.superuser-shop-row:hover { background: #f8fafc; }
+
+/* ---- Filters ---- */
+.su-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.su-filter-select {
+  padding: 7px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* ---- Input ---- */
+.su-input {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+.su-input:focus { outline: none; border-color: #4f46e5; }
+
+/* ---- Two-column grid ---- */
+.su-grid-2col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+/* ---- Dashboard status row ---- */
+.su-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f8fafc;
+}
+.su-status-row:last-child { border-bottom: none; }
+.su-status-count { font-size: 18px; font-weight: 800; color: #1e293b; }
+
+/* ---- Shop Detail Overlay ---- */
+.su-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.su-detail-panel {
+  background: #fff;
+  width: 480px;
+  max-width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.su-detail-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.su-detail-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.su-detail-body { padding: 20px 24px; flex: 1; }
+
+.su-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.su-detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.su-detail-field span { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+.su-detail-field strong { font-size: 13px; color: #1e293b; }
+
+.su-detail-section {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 16px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.su-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.su-inline-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ---- Feature Flags Grid ---- */
+.su-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.su-feature-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  user-select: none;
+}
+.su-feature-toggle:hover { background: #f0f0ff; border-color: #c7d2fe; }
+.su-feature-toggle input { cursor: pointer; }
+
+/* ---- Log Table ---- */
+.su-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.su-log-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+.su-log-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f8fafc;
+  color: #475569;
+}
+.su-log-table tr:last-child td { border-bottom: none; }
+.su-log-table tr:hover td { background: #f8fafc; }
+
+/* ---- Pagination ---- */
+.su-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* ---- New action buttons ---- */
+.superuser-btn--suspend  { background: #fef9c3; color: #78350f; }
+.superuser-btn--suspend:hover  { background: #fde68a; }
+.superuser-btn--unsuspend  { background: #d1fae5; color: #065f46; }
+.superuser-btn--unsuspend:hover  { background: #a7f3d0; }

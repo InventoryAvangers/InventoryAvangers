@@ -1,0 +1,86 @@
+/* EmployeeManagement page — pending approvals and employee table */
+
+.emp-mgmt-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.emp-mgmt-page-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.emp-mgmt-page-subtitle {
+  font-size: var(--font-size-sm);
+  color: #64748b;
+  margin: 0;
+}
+
+.emp-mgmt-pending-section {
+  margin-bottom: 2rem;
+}
+
+.emp-mgmt-pending-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.emp-mgmt-pending-icon {
+  color: #f59e0b;
+}
+
+.emp-mgmt-pending-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: #334155;
+}
+
+.emp-mgmt-pending-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  background-color: #fef3c7;
+  color: #b45309;
+  margin-left: 0.5rem;
+}
+
+.emp-mgmt-empty-card {
+  padding: 3rem;
+  text-align: center;
+}
+
+.emp-mgmt-empty-icon {
+  color: #cbd5e1;
+  margin: 0 auto 0.75rem;
+}
+
+.emp-mgmt-empty-text {
+  color: #64748b;
+}
+
+.emp-mgmt-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.emp-mgmt-approve-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.emp-mgmt-approve-modal-footer {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}

@@ -1,0 +1,68 @@
+/* EmployeeProfile page — back button, profile card with avatar and detail rows */
+
+.ep-profile-card {
+  padding: 1.5rem;
+  max-width: 32rem;
+}
+
+.ep-profile-top {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ep-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background-color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ep-name {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.ep-email {
+  color: #64748b;
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.ep-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ep-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ep-detail-label {
+  font-size: var(--font-size-sm);
+  color: #64748b;
+}
+
+.ep-detail-value {
+  font-size: var(--font-size-sm);
+  color: #334155;
+}
+
+.ep-not-found {
+  color: #64748b;
+}
