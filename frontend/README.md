@@ -1,4 +1,4 @@
-# StockPilot Frontend
+# Frontend
 
 React + Vite single-page application for the Inventory Avengers inventory management system.
 
