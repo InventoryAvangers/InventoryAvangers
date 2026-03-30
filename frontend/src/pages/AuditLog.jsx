@@ -30,6 +30,19 @@ const ACTION_LABELS = {
   change_password: 'Changed Password',
 };
 
+const formatDescription = (log) => {
+  const actor = log.actorId?.name || 'System';
+  const target = log.targetId?.name || '';
+  const action = ACTION_LABELS[log.action] || log.action;
+  
+  if (log.action === 'create_store') return `${actor} created store`;
+  if (log.action === 'update_store') return `${actor} updated store settings`;
+  if (log.action === 'approve_user') return `${actor} approved ${target}`;
+  if (log.action === 'reject_user') return `${actor} rejected ${target}`;
+  if (target) return `${actor} ${action.toLowerCase()} ${target}`;
+  return `${actor} ${action.toLowerCase()}`;
+};
+
 export default function AuditLog() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +113,9 @@ export default function AuditLog() {
                   <th>Timestamp</th>
                   <th>Actor</th>
                   <th>Action</th>
+                  <th>Description</th>
                   <th>Target</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,6 +135,7 @@ export default function AuditLog() {
                         {ACTION_LABELS[log.action] || log.action}
                       </span>
                     </td>
+                    <td className="audit-col-description">{formatDescription(log)}</td>
                     <td>
                       {log.targetId ? (
                         <div>
@@ -127,6 +143,9 @@ export default function AuditLog() {
                           <div className="audit-col-target-email">{log.targetId.email}</div>
                         </div>
                       ) : '—'}
+                    </td>
+                    <td className="audit-col-details" style={{ fontSize: '11px', color: '#64748b', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.metadata ? JSON.stringify(log.metadata) : '—'}
                     </td>
                   </tr>
                 ))}

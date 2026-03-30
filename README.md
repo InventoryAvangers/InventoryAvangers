@@ -1,4 +1,4 @@
-# Inventory Avengers 🛡️ (StockPilot)
+# Inventory Avengers 🛡️ 
 
 A full-stack inventory management system built with **ASP.NET Core**, **MongoDB**, and **React + Vite**.
 

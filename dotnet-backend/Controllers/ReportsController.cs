@@ -182,11 +182,63 @@ public class ReportsController : ControllerBase
             };
         }).ToList();
 
+        // Get actual costs for profit calculation
+        var productIds = sales.SelectMany(s => s.Items).Select(i => i.ProductId).Where(id => id != null).Distinct().ToList();
+        var products = productIds.Count > 0 
+            ? await _db.Products.Find(Builders<Product>.Filter.In(p => p.Id, productIds)).ToListAsync()
+            : new List<Product>();
+        var costMap = products.ToDictionary(p => p.Id!, p => p.CostPrice);
+
+        decimal totalCost = 0;
+        foreach (var sale in sales)
+        {
+            // Skip returned sales for profit calculation for simplicity, 
+            // or calculate partial cost for partial returns if needed.
+            // Let's just calculate cost of all items in the sale.
+            foreach (var item in sale.Items)
+            {
+                if (item.ProductId != null && costMap.TryGetValue(item.ProductId, out var costPrice))
+                {
+                    totalCost += costPrice * item.Qty;
+                }
+            }
+        }
+
         var grossRevenue = sales.Sum(s => s.TotalAmount);
         var totalReturned = returns.Sum(r => r.RefundAmount);
         var totalRevenue = Math.Max(0, grossRevenue - totalReturned);
         var totalOrders = sales.Count;
-        var totalProfit = totalRevenue * 0.2m;
+
+        // Actual profit is Revenue minus sum of Cost Prices (and refunds)
+        // Simplified: (Gross Revenue - Cost) - Refunds
+        // Wait, if an item is returned, we refund revenue but keep the item, so cost shouldn't be subtracted for profit.
+        // Actually, Revenue - Refunds = Net Revenue. Net Revenue - Net Cost = Profit.
+        // If an item is returned, is its cost recovered? Yes, back to inventory. 
+        // We'll calculate profit per sale where it's not fully returned, or proportionally.
+        // Let's do a more accurate calculation:
+        decimal calculatedProfit = 0;
+        foreach (var sale in sales)
+        {
+            var saleReturned = returnMap.TryGetValue(sale.Id!, out var refundAmt) ? refundAmt : 0m;
+            decimal saleCost = 0;
+            foreach (var item in sale.Items)
+            {
+                if (item.ProductId != null && costMap.TryGetValue(item.ProductId, out var costPrice))
+                {
+                    saleCost += costPrice * item.Qty;
+                }
+            }
+
+            // Profit for this sale = Sale Revenue - Sale Cost
+            // If partly or fully returned, we reduce both Revenue and Cost proportionally.
+            decimal netSaleRevenue = Math.Max(0, sale.TotalAmount - saleReturned);
+            decimal revenueRatio = sale.TotalAmount > 0 ? netSaleRevenue / sale.TotalAmount : 0;
+            decimal netSaleCost = saleCost * revenueRatio;
+
+            calculatedProfit += (netSaleRevenue - netSaleCost);
+        }
+
+        var totalProfit = calculatedProfit;
         var profitMargin = totalRevenue > 0 ? Math.Round(totalProfit / totalRevenue * 100, 1) : 0;
 
         return Ok(new

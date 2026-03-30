@@ -770,7 +770,36 @@ public class SuperuserController : ControllerBase
             .ToListAsync();
         var total = await _db.ActivityLogs.CountDocumentsAsync(filter);
 
-        return Ok(new { success = true, data = logs, total, page, pages = (int)Math.Ceiling(total / (double)limit) });
+        var actorIds = logs.Select(l => l.ActorId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var storeIds = logs.Select(l => !string.IsNullOrEmpty(l.StoreId) ? l.StoreId : (l.TargetType == "store" ? l.TargetId : null))
+                           .Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+
+        var users = await _db.Users.Find(Builders<User>.Filter.In(u => u.Id, actorIds)).ToListAsync();
+        var stores = await _db.Stores.Find(Builders<Store>.Filter.In(s => s.Id, storeIds)).ToListAsync();
+
+        var userMap = users.ToDictionary(u => u.Id!, u => new { _id = u.Id, name = u.Name, email = u.Email, role = u.Role });
+        var storeMap = stores.ToDictionary(s => s.Id!, s => new { _id = s.Id, name = s.Name });
+
+        var annotatedLogs = logs.Select(l => 
+        {
+            var rStoreId = !string.IsNullOrEmpty(l.StoreId) ? l.StoreId : (l.TargetType == "store" ? l.TargetId : null);
+            var isUserFound = l.ActorId != null && userMap.TryGetValue(l.ActorId, out var actor);
+            var rRole = !string.IsNullOrEmpty(l.ActorRole) ? l.ActorRole : (isUserFound ? userMap[l.ActorId!].role : "system");
+
+            return new
+            {
+                _id = l.Id,
+                action = l.Action,
+                metadata = l.Metadata,
+                timestamp = l.CreatedAt, // Frontend mapping
+                createdAt = l.CreatedAt,
+                actorRole = rRole,
+                actorId = isUserFound ? userMap[l.ActorId!] : null,
+                storeId = rStoreId != null && storeMap.TryGetValue(rStoreId, out var store) ? store : null
+            };
+        }).ToList();
+
+        return Ok(new { success = true, data = annotatedLogs, total, page, pages = (int)Math.Ceiling(total / (double)limit) });
     }
 
     // ── MESSAGES ───────────────────────────────────────────────────────────
@@ -949,12 +978,17 @@ public class SuperuserController : ControllerBase
 
     private async Task LogActivity(string action, string? targetId, string? targetType, object? metadata = null)
     {
+        string? storeId = null;
+        if (targetType == "store") storeId = targetId;
+
         await _db.ActivityLogs.InsertOneAsync(new ActivityLog
         {
             ActorId    = UserId,
+            ActorRole  = UserRole,
             Action     = action,
             TargetId   = targetId,
             TargetType = targetType ?? string.Empty,
+            StoreId    = storeId,
             Metadata   = metadata
         });
     }

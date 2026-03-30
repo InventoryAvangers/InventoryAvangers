@@ -184,9 +184,8 @@ export default function Reports() {
       doc.text(`Gross Revenue: ${fmt(summary.grossRevenue ?? summary.totalRevenue)}`, margin, y); y += 6;
       doc.text(`Total Returned: ${fmt(summary.totalReturned ?? 0)}`, margin, y); y += 6;
       doc.text(`Net Revenue: ${fmt(summary.totalRevenue)}`, margin, y); y += 6;
-      doc.text(`Estimated Profit (20%): ${fmt(summary.totalProfit)}`, margin, y); y += 6;
+      doc.text(`Estimated Profit: ${fmt(summary.totalProfit)}`, margin, y); y += 6;
       doc.text(`Profit Margin: ${summary.profitMargin}%`, margin, y); y += 6;
-      doc.text('Note: Profit is estimated at 20% of net revenue.', margin, y);
     }
 
     doc.save(fileName);

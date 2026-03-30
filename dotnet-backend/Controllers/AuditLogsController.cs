@@ -40,6 +40,25 @@ public class AuditLogsController : ControllerBase
         var total = await _db.AuditLogs.CountDocumentsAsync(filter);
         var pages = (int)Math.Ceiling(total / (double)limit);
 
-        return Ok(new { success = true, data = logs, total, page, pages });
+        // Fetch users to populate ActorId and TargetId
+        var userIds = logs.Select(l => l.ActorId)
+            .Concat(logs.Select(l => l.TargetId).Where(id => !string.IsNullOrEmpty(id)))
+            .Distinct()
+            .ToList();
+
+        var users = await _db.Users.Find(Builders<User>.Filter.In(u => u.Id, userIds)).ToListAsync();
+        var userMap = users.ToDictionary(u => u.Id!, u => new { _id = u.Id, name = u.Name, email = u.Email });
+
+        var annotatedLogs = logs.Select(l => new
+        {
+            _id = l.Id,
+            action = l.Action,
+            metadata = l.Metadata,
+            createdAt = l.CreatedAt,
+            actorId = userMap.TryGetValue(l.ActorId, out var actor) ? actor : null,
+            targetId = l.TargetId != null && userMap.TryGetValue(l.TargetId, out var target) ? target : null
+        }).ToList();
+
+        return Ok(new { success = true, data = annotatedLogs, total, page, pages });
     }
 }

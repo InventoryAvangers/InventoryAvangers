@@ -1,4 +1,4 @@
-﻿using MongoDB.Bson;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using System.Text.Json.Serialization;
 
@@ -14,6 +14,9 @@ public class ActivityLog
     [BsonElement("actorId")]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? ActorId { get; set; }
+
+    [BsonElement("actorRole")]
+    public string? ActorRole { get; set; }
 
     [BsonElement("action")]
     public string Action { get; set; } = string.Empty;

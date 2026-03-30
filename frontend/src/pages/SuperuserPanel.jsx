@@ -469,18 +469,48 @@ function LogsTab({ shops }) {
           <table className="su-log-table">
             <thead><tr><th>Time</th><th>Actor</th><th>Role</th><th>Store</th><th>Action</th><th>Details</th></tr></thead>
             <tbody>
-              {logs.map((l) => (
-                <tr key={l._id}>
-                  <td style={{ whiteSpace: 'nowrap', fontSize: '11px', color: '#94a3b8' }}>{new Date(l.timestamp).toLocaleString()}</td>
-                  <td>{l.actorId?.name || <span style={{ color: '#94a3b8' }}>System</span>}</td>
-                  <td><StatusBadge status={l.actorRole} /></td>
-                  <td style={{ fontSize: '12px', color: '#64748b' }}>{l.storeId?.name || '—'}</td>
-                  <td><code style={{ fontSize: '11px', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{l.action}</code></td>
-                  <td style={{ fontSize: '11px', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {JSON.stringify(l.metadata || {})}
-                  </td>
-                </tr>
-              ))}
+              {logs.map((l) => {
+                // Determine a friendly description if possible
+                let desc = l.action;
+                if (l.action === 'shop.trial_extended') desc = `Extended trial by ${l.metadata?.days} days`;
+                if (l.action === 'shop.plan_overridden') desc = `Overrode plan to ${l.metadata?.plan}`;
+                if (l.action === 'shop.approved') desc = 'Approved shop';
+                if (l.action === 'shop.rejected') desc = 'Rejected shop';
+                if (l.action === 'shop.suspended') desc = 'Suspended shop';
+                if (l.action === 'shop.unsuspended') desc = 'Unsuspended shop';
+                if (l.action === 'shop.deleted') desc = `Deleted shop ${l.metadata?.storeName}`;
+                if (l.action === 'feature_flags.updated') desc = 'Updated feature flags';
+                if (l.action === 'owner.deactivated') desc = 'Deactivated owner access';
+                if (l.action === 'owner.activated') desc = 'Activated owner access';
+                if (l.action === 'owner.deleted') desc = 'Deleted owner account';
+                if (l.action === 'coupon.created') desc = 'Created new coupon';
+                if (l.action === 'coupon.deleted') desc = 'Deleted coupon';
+
+                return (
+                  <tr key={l._id}>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: '11px', color: '#94a3b8' }}>{new Date(l.timestamp || l.createdAt).toLocaleString()}</td>
+                    <td>
+                      {l.actorId?.name ? (
+                        <div>
+                          <div>{l.actorId.name}</div>
+                          {l.actorId.email && <div style={{ fontSize: '11px', color: '#64748b' }}>{l.actorId.email}</div>}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#94a3b8' }}>System</span>
+                      )}
+                    </td>
+                    <td>{l.actorRole ? <StatusBadge status={l.actorRole} /> : '—'}</td>
+                    <td style={{ fontSize: '12px', color: '#64748b' }}>{l.storeId?.name || '—'}</td>
+                    <td>
+                      <div>{desc}</div>
+                      <code style={{ fontSize: '10px', background: '#f1f5f9', padding: '2px 4px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>{l.action}</code>
+                    </td>
+                    <td style={{ fontSize: '11px', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {l.metadata ? JSON.stringify(l.metadata) : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {pages > 1 && (
