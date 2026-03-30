@@ -46,11 +46,7 @@ export default function App() {
         <Route path="/inventory" element={<AppRoute roles={['owner', 'manager', 'staff']}><Inventory /></AppRoute>} />
         <Route path="/sales" element={<AppRoute roles={['owner', 'manager', 'staff']}><Sales /></AppRoute>} />
         <Route path="/returns" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="returns"><Returns /></AppRoute>} />
-<<<<<<< HEAD
-        <Route path="/reports" element={<AppRoute roles={['owner', 'manager']} feature="reports"><Reports /></AppRoute>} />
-=======
         <Route path="/reports" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="reports"><Reports /></AppRoute>} />
->>>>>>> 5aa6aab (feat(router): setup react-router with role-based protected route wrapper)
         <Route path="/settings" element={<AppRoute><Settings /></AppRoute>} />
         <Route path="/support" element={<AppRoute><SupportMessages /></AppRoute>} />
 

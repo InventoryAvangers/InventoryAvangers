@@ -11,22 +11,15 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
   const titleId = useId();
 
   // Escape key + focus management
-<<<<<<< HEAD
-=======
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
->>>>>>> 5a73710 (feat(ui): add loading spinner, modal and alert reusable components)
   useEffect(() => {
     if (!isOpen) return;
     const prevFocus = document.activeElement;
     // Defer focus so the container is painted before we move focus into it
     const raf = requestAnimationFrame(() => containerRef.current?.focus());
-<<<<<<< HEAD
-    const handler = (e) => { if (e.key === 'Escape') onClose?.(); };
-=======
     const handler = (e) => { if (e.key === 'Escape') onCloseRef.current?.(); };
->>>>>>> 5a73710 (feat(ui): add loading spinner, modal and alert reusable components)
     document.addEventListener('keydown', handler);
     return () => {
       cancelAnimationFrame(raf);
@@ -34,11 +27,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
       // Restore focus to the element that opened the modal
       if (prevFocus && typeof prevFocus.focus === 'function') prevFocus.focus();
     };
-<<<<<<< HEAD
-  }, [isOpen, onClose]);
-=======
   }, [isOpen]);
->>>>>>> 5a73710 (feat(ui): add loading spinner, modal and alert reusable components)
 
   // Focus trap – keep Tab/Shift+Tab cycling inside the dialog
   useEffect(() => {

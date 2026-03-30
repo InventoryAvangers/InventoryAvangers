@@ -29,46 +29,54 @@ public class InventoryController : ControllerBase
         if (string.IsNullOrWhiteSpace(storeId))
             return StatusCode(403, new { message = "No store assigned to your account" });
 
-        var records = await _db.Inventories.Find(i => i.StoreId == storeId).ToListAsync();
-        var productIds = records.Select(r => r.ProductId).ToList();
-        var products = await _db.Products.Find(p => productIds.Contains(p.Id)).ToListAsync();
-        var productMap = products.ToDictionary(p => p.Id!);
+        // Fire inventory records and ALL store products in parallel (2 round-trips instead of 3)
+        var (recordsTask, allProductsTask) = (
+            _db.Inventories.Find(i => i.StoreId == storeId).ToListAsync(),
+            _db.Products.Find(Builders<Product>.Filter.Eq(p => p.StoreId, storeId)).ToListAsync()
+        );
+        await Task.WhenAll(recordsTask, allProductsTask);
 
-        var enrichedRecords = records.Select(r => {
+        var records     = recordsTask.Result;
+        var allProducts = allProductsTask.Result;
+
+        // Build a lookup map for O(1) access
+        var productMap = allProducts.ToDictionary(p => p.Id!);
+
+        // Products that already have an inventory record
+        var inventoriedIds = records.Select(r => r.ProductId).ToHashSet();
+
+        var enrichedRecords = records.Select(r =>
+        {
             productMap.TryGetValue(r.ProductId, out var prod);
-            return new
+            return (object)new
             {
                 r.Id,
                 r.StoreId,
                 r.Quantity,
                 r.Threshold,
                 r.UpdatedAt,
-                costPrice = prod?.CostPrice ?? 0m,
+                costPrice    = prod?.CostPrice    ?? 0m,
                 sellingPrice = prod?.SellingPrice ?? 0m,
-                productId = prod // Frontend expects the full product object here
+                productId    = prod // Frontend expects the full product object here
             };
-        }).Cast<object>().ToList();
+        });
 
-        var inventoriedIds = records.Select(r => r.ProductId).ToList();
+        // Products that have no inventory record yet — returned as virtual zero-quantity entries
+        var virtualRecords = allProducts
+            .Where(p => !inventoriedIds.Contains(p.Id!))
+            .Select(p => (object)new
+            {
+                _id       = (string?)null,
+                productId = p,
+                storeId   = new { _id = storeId },
+                quantity  = 0,
+                threshold = p.Threshold,
+                costPrice    = p.CostPrice,
+                sellingPrice = p.SellingPrice,
+                updatedAt = p.CreatedAt
+            });
 
-        var missingProducts = await _db.Products.Find(
-            Builders<Product>.Filter.Eq(p => p.StoreId, storeId)
-            & Builders<Product>.Filter.Nin(p => p.Id, inventoriedIds)).ToListAsync();
-
-        var virtualRecords = missingProducts.Select(p => new
-        {
-            _id = (string?)null,
-            productId = p,
-            storeId = new { _id = storeId },
-            quantity = 0,
-            threshold = p.Threshold,
-            costPrice = p.CostPrice,
-            sellingPrice = p.SellingPrice,
-            updatedAt = p.CreatedAt
-        }).Cast<object>().ToList();
-
-        var result = enrichedRecords.Concat(virtualRecords).ToList();
-        return Ok(result);
+        return Ok(enrichedRecords.Concat(virtualRecords).ToList());
     }
 
     // GET /api/inventory/average
@@ -93,9 +101,9 @@ public class InventoryController : ControllerBase
         if (products.Count == 0)
             return Ok(new { averageCostPrice = 0m, averageSellingPrice = 0m, averageQuantity = 0m, totalProducts = 0 });
 
-        var avgCostPrice = Math.Round(products.Average(p => p.CostPrice), 2);
+        var avgCostPrice    = Math.Round(products.Average(p => p.CostPrice), 2);
         var avgSellingPrice = Math.Round(products.Average(p => p.SellingPrice), 2);
-        var avgQuantity = Math.Round(records.Average(r => (decimal)r.Quantity), 2);
+        var avgQuantity     = Math.Round(records.Average(r => (decimal)r.Quantity), 2);
 
         return Ok(new
         {
@@ -122,7 +130,7 @@ public class InventoryController : ControllerBase
         {
             Builders<Inventory>.Update.Set(i => i.UpdatedAt, DateTime.UtcNow)
         };
-        if (req.Quantity.HasValue) updates.Add(Builders<Inventory>.Update.Set(i => i.Quantity, req.Quantity.Value));
+        if (req.Quantity.HasValue)  updates.Add(Builders<Inventory>.Update.Set(i => i.Quantity, req.Quantity.Value));
         if (req.Threshold.HasValue) updates.Add(Builders<Inventory>.Update.Set(i => i.Threshold, req.Threshold.Value));
 
         var existing = await _db.Inventories.Find(i => i.ProductId == req.ProductId && i.StoreId == storeId).FirstOrDefaultAsync();
@@ -131,8 +139,8 @@ public class InventoryController : ControllerBase
             var newRecord = new Inventory
             {
                 ProductId = req.ProductId,
-                StoreId = storeId,
-                Quantity = req.Quantity ?? 0,
+                StoreId   = storeId,
+                Quantity  = req.Quantity ?? 0,
                 Threshold = req.Threshold ?? 10
             };
             await _db.Inventories.InsertOneAsync(newRecord);

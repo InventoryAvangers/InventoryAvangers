@@ -34,10 +34,7 @@ export default function EmployeeManagement() {
 
   const [employees, setEmployees] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
-<<<<<<< HEAD
-=======
   const [pendingRequests, setPendingRequests] = useState([]);
->>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -62,13 +59,10 @@ export default function EmployeeManagement() {
         try {
           const pending = await apiGet('/approvals/pending-users');
           setPendingUsers(Array.isArray(pending) ? pending : (pending.data || []));
-<<<<<<< HEAD
-=======
 
           const approvals = await apiGet('/approvals');
           const approvalsArr = Array.isArray(approvals) ? approvals : (approvals.data || []);
           setPendingRequests(approvalsArr.filter(a => a.status === 'pending'));
->>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
         } catch { /* non-critical */ }
       }
     } catch (err) {
@@ -119,8 +113,6 @@ export default function EmployeeManagement() {
     }
   };
 
-<<<<<<< HEAD
-=======
   const handleRequestAction = async (id, status) => {
     if (status === 'rejected' && !window.confirm('Reject this request?')) return;
     try {
@@ -132,7 +124,6 @@ export default function EmployeeManagement() {
     }
   };
 
->>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
   return (
     <DashboardLayout>
       <div className="emp-mgmt-page-header">
@@ -202,8 +193,6 @@ export default function EmployeeManagement() {
             </div>
           )}
 
-<<<<<<< HEAD
-=======
           {/* ── Pending Requests Section (Owner Approvals) ── */}
           {isOwner && pendingRequests.length > 0 && (
             <div className="emp-mgmt-pending-section" style={{ marginTop: '2rem' }}>
@@ -256,7 +245,6 @@ export default function EmployeeManagement() {
             </div>
           )}
 
->>>>>>> 97dd490 (feat(ui): build employee management table with role badges and action modals)
           {/* ── Active Employees ── */}
           {employees.length === 0 ? (
             <div className="card emp-mgmt-empty-card">

@@ -204,10 +204,7 @@ public class ProductsController : ControllerBase
         if (UserRole == "owner")
         {
             await _db.Products.DeleteOneAsync(p => p.Id == id);
-<<<<<<< HEAD
-=======
             await _db.Inventories.DeleteManyAsync(i => i.ProductId == id);
->>>>>>> 177ae6d (feat(inventory): add product and inventory schemas with CRUD controller)
             return Ok(new { message = "Product deleted" });
         }
 
@@ -218,11 +215,6 @@ public class ProductsController : ControllerBase
                 Action = "delete_product",
                 Description = $"Manager {User.FindFirst("name")?.Value} requested deletion of product \"{product.Name}\"",
                 RequestedBy = UserId,
-<<<<<<< HEAD
-                Metadata = new { productId = product.Id, productName = product.Name }
-            };
-            await _db.Approvals.InsertOneAsync(approval);
-=======
                 StoreId = UserStoreId,
                 Metadata = new { productId = product.Id, productName = product.Name }
             };
@@ -241,7 +233,6 @@ public class ProductsController : ControllerBase
             {
                 await _db.Notifications.InsertManyAsync(notifications);
             }
->>>>>>> 177ae6d (feat(inventory): add product and inventory schemas with CRUD controller)
             return StatusCode(202, new { message = "Deletion request submitted for owner approval", approval });
         }
 

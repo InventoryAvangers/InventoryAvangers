@@ -105,6 +105,8 @@ try
 {
     var dbForSeed = app.Services.GetRequiredService<MongoDbContext>();
     await SeedService.SeedAsync(dbForSeed);
+    await dbForSeed.EnsureIndexesAsync();
+    Console.WriteLine("[Indexes] MongoDB indexes ensured.");
 }
 catch (Exception ex)
 {

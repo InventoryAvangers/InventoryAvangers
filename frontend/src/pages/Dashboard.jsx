@@ -34,8 +34,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     setLoading(true);
+    // Scope the sales fetch to 7 days — the chart only needs this window.
+    // The backend now also defaults to 30 days, but being explicit is faster.
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const startDate = sevenDaysAgo.toISOString().split('T')[0];
+
     Promise.all([
-      apiGet('/reports/sales'),
+      apiGet('/reports/sales', { startDate }),
       apiGet('/products'),
       apiGet('/reports/dashboard'),
     ]).then(([reportData, prods, stats]) => {
