@@ -1,8 +1,3 @@
-/**
- * Login page — full-screen auth page with dark gradient background.
- * Accepts email + password, calls the auth store login function,
- * then redirects to /dashboard or /superuser based on role.
- */
 import { useState } from 'react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff, FiShield, FiLogIn } from 'react-icons/fi';
@@ -36,17 +31,19 @@ export default function Login() {
   const showAlert = (message, type = 'error') => setAlert({ message, type });
   const clearAlert = () => setAlert(null);
 
+  function getPostLoginRoute(nextUser) {
+    if (nextUser?.role === 'superuser') return '/superuser';
+    if (nextUser?.role === 'staff') return '/sales';
+    return '/dashboard';
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     clearAlert();
     setLoading(true);
     try {
       const data = await login(email.trim(), password);
-      if (data.user?.role === 'superuser') {
-        navigate('/superuser', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      navigate(getPostLoginRoute(data.user), { replace: true });
     } catch (err) {
       showAlert(apiErrMsg(err));
     } finally {

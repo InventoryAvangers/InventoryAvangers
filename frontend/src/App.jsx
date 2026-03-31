@@ -20,6 +20,12 @@ import SupportMessages from './pages/SupportMessages.jsx';
 import useAuthStore from './store/authStore.js';
 import FullPageLoader from './components/ui/FullPageLoader.jsx';
 
+function RedirectToHome() {
+  const { isAuthenticated } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/landing" replace />;
+  return <CatchAll />;
+}
+
 function CatchAll() {
   const { isAuthenticated, user, featureFlagsLoaded, hasFeature } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
@@ -44,17 +50,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public */}
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/no-permission" element={<NoPermission />} />
-        <Route path="/" element={<Navigate to="/landing" replace />} />
+        <Route path="/" element={<RedirectToHome />} />
 
-        {/* /approvals redirects to /employees (merged) */}
         <Route path="/approvals" element={<Navigate to="/employees" replace />} />
 
-        {/* Protected — any authenticated user (non-superuser) */}
         <Route path="/dashboard" element={<AppRoute roles={['owner', 'manager']}><Dashboard /></AppRoute>} />
         <Route path="/inventory" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="inventory"><Inventory /></AppRoute>} />
         <Route path="/sales" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="pos"><Sales /></AppRoute>} />
@@ -63,17 +66,14 @@ export default function App() {
         <Route path="/settings" element={<AppRoute><Settings /></AppRoute>} />
         <Route path="/support" element={<AppRoute><SupportMessages /></AppRoute>} />
 
-        {/* Superuser Panel */}
         <Route path="/superuser" element={<AppRoute roles={['superuser']}><SuperuserPanel /></AppRoute>} />
 
-        {/* Owner + Manager */}
         <Route path="/stores" element={<AppRoute roles={['owner', 'manager']}><Stores /></AppRoute>} />
         <Route path="/audit-log" element={<AppRoute roles={['owner']}><AuditLog /></AppRoute>} />
         <Route path="/employees" element={<AppRoute roles={['owner', 'manager']} feature="employees"><EmployeeManagement /></AppRoute>} />
         <Route path="/employees/:id" element={<AppRoute roles={['owner', 'manager']} feature="employees"><EmployeeProfile /></AppRoute>} />
         <Route path="/user-approvals" element={<Navigate to="/employees" replace />} />
 
-        {/* Catch-all */}
         <Route path="*" element={<CatchAll />} />
       </Routes>
     </BrowserRouter>
