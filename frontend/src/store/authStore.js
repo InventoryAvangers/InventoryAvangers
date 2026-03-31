@@ -28,6 +28,17 @@ const getStoredShopBranding = () => {
 };
 
 const getStoredTheme = () => localStorage.getItem('theme') || 'light';
+const PRO_FEATURES = {
+  inventory: true,
+  pos: true,
+  returns: true,
+  reports: true,
+  pdfExport: true,
+  employees: true,
+  payments: true,
+  apiAccess: true,
+  darkMode: true,
+};
 
 const useAuthStore = create((set, get) => ({
   token: getStoredToken(),
@@ -36,28 +47,48 @@ const useAuthStore = create((set, get) => ({
   theme: getStoredTheme(),
   featureFlags: getStoredFeatureFlags(),
   shopBranding: getStoredShopBranding(),
-  // true once feature flags have been fetched (or confirmed absent) for the current session.
-  // On page reload we won't re-fetch flags, so treat any existing session as initialized.
-  featureFlagsLoaded: !!getStoredToken(),
+  // Always refresh feature access for an authenticated session to avoid stale local storage.
+  featureFlagsLoaded: !getStoredToken(),
+
+  refreshFeatureFlags: async () => {
+    const { user } = get();
+
+    if (!user) {
+      localStorage.removeItem('featureFlags');
+      set({ featureFlags: null, featureFlagsLoaded: true });
+      return null;
+    }
+
+    if (user.role === 'superuser') {
+      localStorage.setItem('featureFlags', JSON.stringify(PRO_FEATURES));
+      set({ featureFlags: PRO_FEATURES, featureFlagsLoaded: true });
+      return PRO_FEATURES;
+    }
+
+    set({ featureFlagsLoaded: false });
+
+    try {
+      const res = await apiGet('/settings/features');
+      const flags = res.data || null;
+      localStorage.setItem('featureFlags', JSON.stringify(flags));
+      set({ featureFlags: flags, featureFlagsLoaded: true });
+      return flags;
+    } catch {
+      localStorage.removeItem('featureFlags');
+      set({ featureFlags: null, featureFlagsLoaded: true });
+      return null;
+    }
+  },
 
   login: async (email, password) => {
     const data = await apiPost('/auth/login', { email, password });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
-    set({ token: data.token, user: data.user, isAuthenticated: true });
+    set({ token: data.token, user: data.user, isAuthenticated: true, featureFlagsLoaded: false });
 
-    // Fetch feature flags and shop branding for this store (non-blocking)
+    get().refreshFeatureFlags();
     if (data.user?.storeId) {
-      apiGet(`/superuser/feature-flags/${data.user.storeId}`)
-        .then((res) => {
-          const flags = res.data?.features || null;
-          localStorage.setItem('featureFlags', JSON.stringify(flags));
-          set({ featureFlags: flags, featureFlagsLoaded: true });
-        })
-        .catch(() => {
           // Could not load flags — mark as loaded with no flags; routes will deny access properly
-          set({ featureFlagsLoaded: true });
-        });
 
       // Fetch shop branding
       apiGet('/stores')
@@ -70,10 +101,7 @@ const useAuthStore = create((set, get) => ({
           }
         })
         .catch(() => {});
-    } else {
-      set({ featureFlagsLoaded: true });
     }
-
     return data;
   },
 
@@ -93,7 +121,7 @@ const useAuthStore = create((set, get) => ({
   setAuth: (token, user) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    set({ token, user, isAuthenticated: true });
+    set({ token, user, isAuthenticated: true, featureFlagsLoaded: false });
   },
 
   setShopBranding: (branding) => {
@@ -116,7 +144,7 @@ const useAuthStore = create((set, get) => ({
     const { user, featureFlags, featureFlagsLoaded } = get();
     if (user?.role === 'superuser') return true;
     if (!featureFlagsLoaded) return false; // deny until flags are confirmed
-    if (!featureFlags) return true; // no flags document: store pre-dates feature flags, allow all
+    if (!featureFlags) return false;
     return featureFlags[featureName] === true;
   },
 

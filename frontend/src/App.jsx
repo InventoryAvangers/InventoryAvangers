@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppRoute from './components/AppRoute.jsx';
 import Login from './pages/Login.jsx';
@@ -17,15 +18,29 @@ import Settings from './pages/Settings.jsx';
 import SuperuserPanel from './pages/SuperuserPanel.jsx';
 import SupportMessages from './pages/SupportMessages.jsx';
 import useAuthStore from './store/authStore.js';
+import FullPageLoader from './components/ui/FullPageLoader.jsx';
 
 function CatchAll() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, featureFlagsLoaded, hasFeature } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (user?.role === 'staff') return <Navigate to="/inventory" replace />;
+  if (!featureFlagsLoaded) return <FullPageLoader />;
+  if (user?.role === 'staff') {
+    if (hasFeature('inventory')) return <Navigate to="/inventory" replace />;
+    if (hasFeature('pos')) return <Navigate to="/sales" replace />;
+    return <Navigate to="/support" replace />;
+  }
   return <Navigate to={user?.role === 'superuser' ? '/superuser' : '/dashboard'} replace />;
 }
 
 export default function App() {
+  const { isAuthenticated, refreshFeatureFlags } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refreshFeatureFlags();
+    }
+  }, [isAuthenticated, refreshFeatureFlags]);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -41,8 +56,8 @@ export default function App() {
 
         {/* Protected — any authenticated user (non-superuser) */}
         <Route path="/dashboard" element={<AppRoute roles={['owner', 'manager']}><Dashboard /></AppRoute>} />
-        <Route path="/inventory" element={<AppRoute roles={['owner', 'manager', 'staff']}><Inventory /></AppRoute>} />
-        <Route path="/sales" element={<AppRoute roles={['owner', 'manager', 'staff']}><Sales /></AppRoute>} />
+        <Route path="/inventory" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="inventory"><Inventory /></AppRoute>} />
+        <Route path="/sales" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="pos"><Sales /></AppRoute>} />
         <Route path="/returns" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="returns"><Returns /></AppRoute>} />
         <Route path="/reports" element={<AppRoute roles={['owner', 'manager', 'staff']} feature="reports"><Reports /></AppRoute>} />
         <Route path="/settings" element={<AppRoute><Settings /></AppRoute>} />

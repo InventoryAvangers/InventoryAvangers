@@ -33,6 +33,7 @@ if (File.Exists(envPath))
 
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<TrialStatusService>();
 
 // Controllers + JSON serialisation
 builder.Services.AddControllers(opts =>

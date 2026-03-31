@@ -14,17 +14,19 @@ public class SuperuserController : ControllerBase
 {
     private readonly MongoDbContext _db;
     private readonly AuthService _authService;
+    private readonly TrialStatusService _trialStatusService;
 
-    public SuperuserController(MongoDbContext db, AuthService authService)
+    public SuperuserController(MongoDbContext db, AuthService authService, TrialStatusService trialStatusService)
     {
         _db = db;
         _authService = authService;
+        _trialStatusService = trialStatusService;
     }
 
     private string? UserId   => User.FindFirst("id")?.Value;
     private string? UserRole => User.FindFirst("role")?.Value;
 
-    private static readonly string[] ValidPlans = { "free", "basic", "pro" };
+    private static readonly string[] ValidPlans = { "free", "pro" };
 
     private IActionResult ForbidIfNotSuperuser()
     {
@@ -179,6 +181,8 @@ public class SuperuserController : ControllerBase
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
 
+        await _trialStatusService.SyncExpiredTrialsAsync();
+
         var filter = Builders<Store>.Filter.Empty;
         if (!string.IsNullOrWhiteSpace(status)) filter &= Builders<Store>.Filter.Eq(s => s.Status, status);
         if (!string.IsNullOrWhiteSpace(plan))   filter &= Builders<Store>.Filter.Eq(s => s.Plan,   plan);
@@ -206,6 +210,7 @@ public class SuperuserController : ControllerBase
             store.OwnerId,
             store.ManagerId,
             store.CreatedAt,
+            trialDaysLeft = TrialStatusService.GetTrialDaysLeft(store),
             subscription = subMap.TryGetValue(store.Id!, out var sub) ? sub : null
         }).ToList();
 
@@ -217,6 +222,8 @@ public class SuperuserController : ControllerBase
     public async Task<IActionResult> GetShop(string id)
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
+
+        await _trialStatusService.SyncExpiredTrialsAsync(id);
 
         var store = await _db.Stores.Find(s => s.Id == id).FirstOrDefaultAsync();
         if (store == null) return NotFound(new { success = false, message = "Shop not found" });
@@ -238,6 +245,7 @@ public class SuperuserController : ControllerBase
             store.OwnerId,
             store.ManagerId,
             store.CreatedAt,
+            trialDaysLeft = TrialStatusService.GetTrialDaysLeft(store),
             subscription  = sub,
             featureFlags  = flags,
             totalOrders,
@@ -383,7 +391,7 @@ public class SuperuserController : ControllerBase
         if (ForbidIfNotSuperuser() is { } f) return f;
 
         if (!ValidPlans.Contains(req.Plan))
-            return BadRequest(new { success = false, message = "Plan must be free, basic, or pro" });
+            return BadRequest(new { success = false, message = "Plan must be free or pro" });
 
         var store = await _db.Stores.FindOneAndUpdateAsync(
             s => s.Id == id,
@@ -716,19 +724,51 @@ public class SuperuserController : ControllerBase
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
 
+        await _trialStatusService.SyncExpiredTrialsAsync();
+
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var expiringSoonCutoff = now.AddDays(7);
 
         var totalUsers       = await _db.Users.CountDocumentsAsync(u => u.Status == "approved");
         var activeShops      = await _db.Stores.CountDocumentsAsync(s => s.Status == "active");
         var trialShops       = await _db.Stores.CountDocumentsAsync(s => s.Status == "trial");
         var pendingRequests  = await _db.AccessRequests.CountDocumentsAsync(r => r.Status == "pending");
         var newShopsThisMonth = await _db.Stores.CountDocumentsAsync(s => s.CreatedAt >= startOfMonth);
+        var stores = await _db.Stores.Find(_ => true).ToListAsync();
+
+        var shopStatusBreakdown = stores
+            .GroupBy(s => string.IsNullOrWhiteSpace(s.Status) ? "inactive" : s.Status.Trim().ToLowerInvariant())
+            .OrderBy(g => g.Key)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        var trialExpiringSoon = stores
+            .Where(s => s.Status == "trial" && s.TrialExpiresAt >= now && s.TrialExpiresAt <= expiringSoonCutoff)
+            .OrderBy(s => s.TrialExpiresAt)
+            .Take(5)
+            .Select(s => new
+            {
+                _id = s.Id,
+                name = s.Name,
+                code = s.Code,
+                trialExpiresAt = s.TrialExpiresAt,
+                trialDaysLeft = TrialStatusService.GetTrialDaysLeft(s)
+            })
+            .ToList();
 
         return Ok(new
         {
             success = true,
-            data = new { totalUsers, activeShops, trialShops, pendingRequests, newShopsThisMonth }
+            data = new
+            {
+                totalUsers,
+                activeShops,
+                trialShops,
+                pendingRequests,
+                newShopsThisMonth,
+                shopStatusBreakdown,
+                trialExpiringSoon
+            }
         });
     }
 

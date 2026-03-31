@@ -13,8 +13,8 @@ import './Sidebar.css';
 
 const NAV_ITEMS = [
   { to: '/dashboard', icon: FiGrid, label: 'Dashboard', roles: ['owner', 'manager'] },
-  { to: '/inventory', icon: FiPackage, label: 'Inventory', roles: ['owner', 'manager', 'staff'] },
-  { to: '/sales', icon: FiShoppingCart, label: 'Sales / POS', roles: ['owner', 'manager', 'staff'] },
+  { to: '/inventory', icon: FiPackage, label: 'Inventory', roles: ['owner', 'manager', 'staff'], feature: 'inventory' },
+  { to: '/sales', icon: FiShoppingCart, label: 'Sales / POS', roles: ['owner', 'manager', 'staff'], feature: 'pos' },
   { to: '/returns', icon: FiRotateCcw, label: 'Returns', roles: ['owner', 'manager', 'staff'], feature: 'returns' },
   { to: '/reports', icon: FiBarChart2, label: 'Reports', roles: ['owner', 'manager', 'staff'], feature: 'reports' },
   { to: '/employees', icon: FiUsers, label: 'Employees', roles: ['owner', 'manager'], feature: 'employees' },

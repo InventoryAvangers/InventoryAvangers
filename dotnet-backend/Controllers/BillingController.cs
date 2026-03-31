@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using InventoryAvengers.API.Data;
 using InventoryAvengers.API.Models;
+using InventoryAvengers.API.Services;
 
 namespace InventoryAvengers.API.Controllers;
 
@@ -11,8 +12,13 @@ namespace InventoryAvengers.API.Controllers;
 public class BillingController : ControllerBase
 {
     private readonly MongoDbContext _db;
+    private readonly TrialStatusService _trialStatusService;
 
-    public BillingController(MongoDbContext db) => _db = db;
+    public BillingController(MongoDbContext db, TrialStatusService trialStatusService)
+    {
+        _db = db;
+        _trialStatusService = trialStatusService;
+    }
 
     private string? UserStoreId => User.FindFirst("storeId")?.Value is { Length: > 0 } s ? s : null;
 
@@ -56,6 +62,8 @@ public class BillingController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(UserStoreId))
             return BadRequest(new { success = false, message = "No store associated" });
+
+        await _trialStatusService.SyncExpiredTrialsAsync(UserStoreId);
 
         var sub = await _db.Subscriptions.Find(s => s.StoreId == UserStoreId).FirstOrDefaultAsync();
         return Ok(new { success = true, data = sub });

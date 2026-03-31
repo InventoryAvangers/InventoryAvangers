@@ -50,13 +50,24 @@ public class FeatureCheckAttribute : Attribute, IAsyncActionFilter
 
         if (flags == null)
         {
-            // Auto-provision feature flags with free plan defaults so the store can function
+            var store = await db.Stores.Find(s => s.Id == storeId).FirstOrDefaultAsync();
+            var subscription = await db.Subscriptions.Find(s => s.StoreId == storeId).FirstOrDefaultAsync();
+            var plan = subscription?.Plan ?? store?.Plan ?? "free";
+
+            // Auto-provision feature flags using the store's effective plan defaults.
             flags = new FeatureFlag
             {
                 StoreId  = storeId,
-                Features = FeatureFlag.GetDefaults("free")
+                Features = FeatureFlag.GetDefaults(plan)
             };
-            try { await db.FeatureFlags.InsertOneAsync(flags); } catch { /* race condition: already inserted */ }
+            try
+            {
+                await db.FeatureFlags.InsertOneAsync(flags);
+            }
+            catch
+            {
+                flags = await db.FeatureFlags.Find(f => f.StoreId == storeId).FirstOrDefaultAsync() ?? flags;
+            }
         }
 
         var featureEnabled = _featureName switch

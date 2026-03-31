@@ -17,6 +17,8 @@ public class SettingsController : ControllerBase
     public SettingsController(MongoDbContext db) => _db = db;
 
     private string? UserId => User.FindFirst("id")?.Value;
+    private string? UserRole => User.FindFirst("role")?.Value;
+    private string? UserStoreId => User.FindFirst("storeId")?.Value;
 
     // GET /api/settings/profile
     [HttpGet("profile")]
@@ -73,6 +75,52 @@ public class SettingsController : ControllerBase
                 currency = user.Currency,
                 user.Role
             }
+        });
+    }
+
+    // GET /api/settings/features
+    [HttpGet("features")]
+    public async Task<IActionResult> GetFeatures()
+    {
+        if (UserRole == "superuser")
+        {
+            return Ok(new
+            {
+                success = true,
+                data = FeatureFlag.GetDefaults("pro")
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(UserStoreId))
+            return StatusCode(403, new { success = false, message = "No store associated with this account" });
+
+        var store = await _db.Stores.Find(s => s.Id == UserStoreId).FirstOrDefaultAsync();
+        var subscription = await _db.Subscriptions.Find(s => s.StoreId == UserStoreId).FirstOrDefaultAsync();
+        var plan = subscription?.Plan ?? store?.Plan ?? "free";
+
+        var flags = await _db.FeatureFlags.Find(f => f.StoreId == UserStoreId).FirstOrDefaultAsync();
+        if (flags == null)
+        {
+            flags = new FeatureFlag
+            {
+                StoreId = UserStoreId,
+                Features = FeatureFlag.GetDefaults(plan)
+            };
+
+            try
+            {
+                await _db.FeatureFlags.InsertOneAsync(flags);
+            }
+            catch
+            {
+                flags = await _db.FeatureFlags.Find(f => f.StoreId == UserStoreId).FirstOrDefaultAsync() ?? flags;
+            }
+        }
+
+        return Ok(new
+        {
+            success = true,
+            data = flags.Features
         });
     }
 }

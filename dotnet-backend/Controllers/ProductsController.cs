@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using InventoryAvengers.API.Data;
 using InventoryAvengers.API.DTOs;
+using InventoryAvengers.API.Middleware;
 using InventoryAvengers.API.Models;
 using InventoryAvengers.API.Services;
 
@@ -90,6 +91,7 @@ public class ProductsController : ControllerBase
 
     // POST /api/products
     [HttpPost]
+    [FeatureCheck("inventory")]
     public async Task<IActionResult> Create([FromBody] CreateProductRequest req)
     {
         if (IsSuperuser) return StatusCode(403, new { success = false, message = "Forbidden: superuser cannot access store-level data" });
@@ -145,6 +147,7 @@ public class ProductsController : ControllerBase
 
     // PUT /api/products/:id
     [HttpPut("{id}")]
+    [FeatureCheck("inventory")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateProductRequest req)
     {
         if (IsSuperuser) return StatusCode(403, new { success = false, message = "Forbidden: superuser cannot access store-level data" });
@@ -194,6 +197,7 @@ public class ProductsController : ControllerBase
 
     // DELETE /api/products/:id
     [HttpDelete("{id}")]
+    [FeatureCheck("inventory")]
     public async Task<IActionResult> Delete(string id)
     {
         if (IsSuperuser) return StatusCode(403, new { success = false, message = "Forbidden: superuser cannot access store-level data" });
