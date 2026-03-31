@@ -143,19 +143,6 @@
   padding: 80px 20px;
 }
 
-.landing-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #ede9fe;
-  color: #6d28d9;
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 24px;
-}
-
 .landing-hero__title {
   font-size: clamp(36px, 6vw, 64px);
   font-weight: 800;

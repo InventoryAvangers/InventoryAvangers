@@ -98,7 +98,6 @@ export default function Landing() {
       {/* ── Hero ── */}
       <section className="landing-hero">
         <div className="landing-hero__inner">
-          <div className="landing-hero__badge">🚀 SaaS Inventory Platform</div>
           <h1 className="landing-hero__title">
             Manage Your Inventory<br />
             <span>Like Never Before</span>
