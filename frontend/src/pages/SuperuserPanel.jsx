@@ -34,7 +34,7 @@ function StatusBadge({ status }) {
 }
 
 function PlanBadge({ plan }) {
-  const colors = { free: 'badge-free', basic: 'badge-basic', pro: 'badge-pro' };
+  const colors = { free: 'badge-free', pro: 'badge-pro' };
   return <span className={`superuser-plan-badge ${colors[plan] || ''}`}>{plan || 'free'}</span>;
 }
 
@@ -92,17 +92,19 @@ function DashboardTab() {
         </div>
 
         <div className="superuser-card">
-          <div className="superuser-card__header"><div className="superuser-card__title">Recent Sign-ups</div></div>
+          <div className="superuser-card__header"><div className="superuser-card__title">Trial Expiring Soon</div></div>
           <div style={{ padding: '16px 20px' }}>
-            {(data.signupHistory || []).map((item, i) => (
-              <div key={i} className="su-status-row">
+            {(data.trialExpiringSoon || []).map((shop) => (
+              <div key={shop._id} className="su-status-row">
                 <span style={{ fontSize: '13px', color: '#475569' }}>
-                  {item._id?.month}/{item._id?.year}
+                  {shop.name} {shop.code ? `(${shop.code})` : ''}
                 </span>
-                <span className="su-status-count">{item.count}</span>
+                <span className="su-status-count">
+                  {shop.trialDaysLeft === 0 ? 'Today' : `${shop.trialDaysLeft}d left`}
+                </span>
               </div>
             ))}
-            {!(data.signupHistory || []).length && <div className="superuser-empty">No data yet.</div>}
+            {!(data.trialExpiringSoon || []).length && <div className="superuser-empty">No trials expiring in the next 7 days.</div>}
           </div>
         </div>
       </div>
@@ -120,7 +122,7 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
   const [selectedShop, setSelectedShop] = useState(null);
   const [shopDetail, setShopDetail] = useState(null);
   const [extendDays, setExtendDays] = useState(14);
-  const [overridePlan, setOverridePlan] = useState('basic');
+  const [overridePlan, setOverridePlan] = useState('pro');
   const [featureFlags, setFeatureFlags] = useState(null);
 
   const pendingCount = requests.filter((r) => r.status === 'pending').length;
@@ -271,7 +273,7 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
             </select>
             <select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)} className="su-filter-select">
               <option value="">All Plans</option>
-              {['free', 'basic', 'pro'].map((p) => <option key={p} value={p}>{p}</option>)}
+              {['free', 'pro'].map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </div>
 
@@ -341,7 +343,6 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
                   <div className="su-inline-action">
                     <select value={overridePlan} onChange={(e) => setOverridePlan(e.target.value)} className="su-filter-select">
                       <option value="free">Free</option>
-                      <option value="basic">Basic</option>
                       <option value="pro">Pro</option>
                     </select>
                     <button className="superuser-btn superuser-btn--approve" onClick={() => handleOverridePlan(selectedShop)}><FiSettings size={13} /> Apply</button>

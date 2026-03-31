@@ -29,6 +29,29 @@ public static class SeedService
     {
         // ─── 1. Provision FeatureFlags for ALL existing stores ──────────────────
         // Without this, FeatureCheck blocks every store-level endpoint with 403.
+        await db.Stores.UpdateManyAsync(
+            s => s.Plan == "basic",
+            Builders<Store>.Update.Set(s => s.Plan, "pro"));
+
+        await db.Subscriptions.UpdateManyAsync(
+            s => s.Plan == "basic",
+            Builders<Subscription>.Update
+                .Set(s => s.Plan, "pro")
+                .Set(s => s.UpdatedAt, DateTime.UtcNow));
+
+        var couponsWithBasic = await db.Coupons.Find(c => c.ApplicablePlans.Contains("basic")).ToListAsync();
+        foreach (var coupon in couponsWithBasic)
+        {
+            var normalizedPlans = coupon.ApplicablePlans
+                .Select(p => p == "basic" ? "pro" : p)
+                .Distinct()
+                .ToList();
+
+            await db.Coupons.UpdateOneAsync(
+                c => c.Id == coupon.Id,
+                Builders<Coupon>.Update.Set(c => c.ApplicablePlans, normalizedPlans));
+        }
+
         var allStores = await db.Stores.Find(_ => true).ToListAsync();
         foreach (var store in allStores)
         {

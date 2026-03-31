@@ -52,7 +52,6 @@ public class FeatureFlag
 
     public static FeatureSet GetDefaults(string plan) => plan switch
     {
-        "basic" => new FeatureSet { Inventory = true, Pos = true, Returns = true, Reports = true, PdfExport = true, Employees = true, Payments = true, ApiAccess = false, DarkMode = true },
         "pro"   => new FeatureSet { Inventory = true, Pos = true, Returns = true, Reports = true, PdfExport = true, Employees = true, Payments = true, ApiAccess = true,  DarkMode = true },
         _       => new FeatureSet { Inventory = true, Pos = true, Returns = false, Reports = false, PdfExport = false, Employees = false, Payments = false, ApiAccess = false, DarkMode = true }
     };

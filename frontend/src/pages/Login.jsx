@@ -8,12 +8,13 @@ import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { FiEye, FiEyeOff, FiShield, FiLogIn } from 'react-icons/fi';
 import useAuthStore from '../store/authStore.js';
 import Alert from '../components/ui/Alert.jsx';
+import FullPageLoader from '../components/ui/FullPageLoader.jsx';
 import { apiErrMsg } from '../api/axios.js';
 import './Login.css';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, isAuthenticated, user } = useAuthStore();
+  const { login, isAuthenticated, user, featureFlagsLoaded, hasFeature } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +23,13 @@ export default function Login() {
   const [alert, setAlert] = useState(null);
 
   if (isAuthenticated) {
+    if (!featureFlagsLoaded) return <FullPageLoader />;
     if (user?.role === 'superuser') return <Navigate to="/superuser" replace />;
-    if (user?.role === 'staff') return <Navigate to="/inventory" replace />;
+    if (user?.role === 'staff') {
+      if (hasFeature('inventory')) return <Navigate to="/inventory" replace />;
+      if (hasFeature('pos')) return <Navigate to="/sales" replace />;
+      return <Navigate to="/support" replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -38,10 +44,8 @@ export default function Login() {
       const data = await login(email.trim(), password);
       if (data.user?.role === 'superuser') {
         navigate('/superuser', { replace: true });
-      } else if (data.user?.role === 'staff') {
-        navigate('/inventory', { replace: true });
       } else {
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     } catch (err) {
       showAlert(apiErrMsg(err));

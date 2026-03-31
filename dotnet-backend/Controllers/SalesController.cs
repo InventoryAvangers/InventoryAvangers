@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
 using InventoryAvengers.API.Data;
 using InventoryAvengers.API.DTOs;
+using InventoryAvengers.API.Middleware;
 using InventoryAvengers.API.Models;
 using InventoryAvengers.API.Services;
 
@@ -11,6 +12,7 @@ namespace InventoryAvengers.API.Controllers;
 [ApiController]
 [Route("api/sales")]
 [Authorize]
+[FeatureCheck("pos")]
 public class SalesController : ControllerBase
 {
     private readonly MongoDbContext _db;

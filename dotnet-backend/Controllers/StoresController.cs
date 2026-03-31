@@ -4,6 +4,7 @@ using MongoDB.Driver;
 using InventoryAvengers.API.Data;
 using InventoryAvengers.API.DTOs;
 using InventoryAvengers.API.Models;
+using InventoryAvengers.API.Services;
 
 namespace InventoryAvengers.API.Controllers;
 
@@ -12,8 +13,13 @@ namespace InventoryAvengers.API.Controllers;
 public class StoresController : ControllerBase
 {
     private readonly MongoDbContext _db;
+    private readonly TrialStatusService _trialStatusService;
 
-    public StoresController(MongoDbContext db) => _db = db;
+    public StoresController(MongoDbContext db, TrialStatusService trialStatusService)
+    {
+        _db = db;
+        _trialStatusService = trialStatusService;
+    }
 
     private string? UserId => User.FindFirst("id")?.Value;
     private string? UserRole => User.FindFirst("role")?.Value;
@@ -24,6 +30,8 @@ public class StoresController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetPublic()
     {
+        await _trialStatusService.SyncExpiredTrialsAsync();
+
         var stores = await _db.Stores
             .Find(s => s.Status == "active" || s.Status == "trial")
             .SortBy(s => s.ShopName)
@@ -39,9 +47,12 @@ public class StoresController : ControllerBase
     {
         if (UserRole == "owner")
         {
+            await _trialStatusService.SyncExpiredTrialsAsync();
             var stores = await _db.Stores.Find(_ => true).SortBy(s => s.Name).ToListAsync();
             return Ok(stores);
         }
+
+        await _trialStatusService.SyncExpiredTrialsAsync(UserStoreId);
 
         if (string.IsNullOrWhiteSpace(UserStoreId)) return Ok(new List<Store>());
         var store = await _db.Stores.Find(s => s.Id == UserStoreId).FirstOrDefaultAsync();
