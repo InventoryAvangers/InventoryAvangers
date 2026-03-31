@@ -8,9 +8,6 @@ public static class SeedService
 {
     private static readonly (string Name, string Email, string Role, string Password)[] DemoUsers =
     [
-        ("Demo Owner",     "owner@demo.com",     "owner",     "password123"),
-        ("Demo Manager",   "manager@demo.com",   "manager",   "password123"),
-        ("Demo Staff",     "staff@demo.com",     "staff",     "password123"),
         ("Demo Superuser", "superuser@demo.com", "superuser", "password123")
     ];
 
@@ -92,43 +89,7 @@ public static class SeedService
             Console.WriteLine($"[Seed] Created demo user: {email}");
         }
 
-        // ─── 3. Seed / validate owner from environment variables ────────────────
-        var ownerEmail    = (Environment.GetEnvironmentVariable("OWNER_EMAIL")    ?? "owner@inventoryavengers.com").ToLower();
-        var ownerPassword =  Environment.GetEnvironmentVariable("OWNER_PASSWORD") ?? "OwnerSecure#2024";
 
-        var ownerExisting = await db.Users.Find(u => u.Email == ownerEmail).FirstOrDefaultAsync();
-        if (ownerExisting != null)
-        {
-            bool canLogin = BCrypt.Net.BCrypt.Verify(ownerPassword, ownerExisting.PasswordHash);
-            if (!canLogin)
-            {
-                var fixedHash = BCrypt.Net.BCrypt.HashPassword(ownerPassword, 10);
-                await db.Users.UpdateOneAsync(
-                    u => u.Id == ownerExisting.Id,
-                    Builders<User>.Update
-                        .Set(u => u.PasswordHash, fixedHash)
-                        .Set(u => u.Status, "approved"));
-                Console.WriteLine($"[Seed] Fixed password for owner: {ownerEmail}");
-            }
-            else
-            {
-                Console.WriteLine($"[Seed] Owner account already valid: {ownerEmail}");
-            }
-        }
-        else
-        {
-            var hash = BCrypt.Net.BCrypt.HashPassword(ownerPassword, 10);
-            await db.Users.InsertOneAsync(new User
-            {
-                Name               = "Owner",
-                Email              = ownerEmail,
-                PasswordHash       = hash,
-                Role               = "owner",
-                Status             = "approved",
-                MustChangePassword = true
-            });
-            Console.WriteLine($"[Seed] Created owner account: {ownerEmail}");
-        }
 
         // ─── 4. Heal all legacy accounts ────────────────────────────────────────
         // Old Node.js accounts may have null/empty status or be stuck as "pending".

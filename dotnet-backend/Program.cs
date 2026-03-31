@@ -1,5 +1,6 @@
 using System.Text;
 using AspNetCoreRateLimit;
+using MongoDB.Bson.Serialization.Conventions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using InventoryAvengers.API.Data;
@@ -7,6 +8,10 @@ using InventoryAvengers.API.Middleware;
 using InventoryAvengers.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Register MongoDB conventions to ignore extra properties (like Mongoose __v)
+var pack = new ConventionPack { new IgnoreExtraElementsConvention(true) };
+ConventionRegistry.Register("IgnoreExtraElements", pack, t => true);
 
 // Disable default claim mapping to keep JWT claim names (required for "role" and "id" to work correctly)
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultMapInboundClaims = false;

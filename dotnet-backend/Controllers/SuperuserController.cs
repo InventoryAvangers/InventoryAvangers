@@ -719,20 +719,16 @@ public class SuperuserController : ControllerBase
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
 
-        var totalUsers       = await _db.Users.CountDocumentsAsync(_ => true);
+        var totalUsers       = await _db.Users.CountDocumentsAsync(u => u.Status == "approved");
         var activeShops      = await _db.Stores.CountDocumentsAsync(s => s.Status == "active");
         var trialShops       = await _db.Stores.CountDocumentsAsync(s => s.Status == "trial");
         var pendingRequests  = await _db.AccessRequests.CountDocumentsAsync(r => r.Status == "pending");
         var newShopsThisMonth = await _db.Stores.CountDocumentsAsync(s => s.CreatedAt >= startOfMonth);
 
-        var allSubs = await _db.Subscriptions.Find(s => s.Status == "active").ToListAsync();
-        var planPrice = new Dictionary<string, int> { { "free", 0 }, { "basic", 999 }, { "pro", 2999 } };
-        var mrr = allSubs.Sum(s => planPrice.TryGetValue(s.Plan, out var p) ? p : 0);
-
         return Ok(new
         {
             success = true,
-            data = new { totalUsers, activeShops, trialShops, pendingRequests, newShopsThisMonth, mrr }
+            data = new { totalUsers, activeShops, trialShops, pendingRequests, newShopsThisMonth }
         });
     }
 

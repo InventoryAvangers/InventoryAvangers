@@ -61,12 +61,11 @@ function DashboardTab() {
     <div>
       <div className="superuser-stats">
         {[
-          { label: 'Total Users', value: data.totalUsers, icon: <FiUsers />, color: 'blue' },
+          { label: 'Active Users', value: data.totalUsers, icon: <FiUsers />, color: 'blue' },
           { label: 'Active Shops', value: data.activeShops, icon: <FiCheckCircle />, color: 'green' },
           { label: 'On Trial', value: data.trialShops, icon: <FiClock />, color: 'yellow' },
           { label: 'Pending Requests', value: data.pendingRequests, icon: <FiAlertTriangle />, color: 'red' },
           { label: 'New This Month', value: data.newShopsThisMonth, icon: <FiHome />, color: 'blue' },
-          { label: 'MRR (₹)', value: `₹${(data.mrr || 0).toLocaleString()}`, icon: <FiBarChart2 />, color: 'green' },
         ].map((card) => (
           <div key={card.label} className="superuser-stat-card">
             <div className={`superuser-stat-card__icon superuser-stat-card__icon--${card.color}`}>{card.icon}</div>
