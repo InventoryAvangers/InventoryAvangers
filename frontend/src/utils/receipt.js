@@ -12,6 +12,7 @@ export function downloadReceiptPDF(sale, shopBranding, fmt) {
   const doc = new jsPDF({ format: 'a6', unit: 'mm' });
   const margin = 10;
   let y = margin;
+  const saleId = sale._id ? `#${String(sale._id).slice(-8).toUpperCase()}` : 'N/A';
 
   const shopName = shopBranding?.shopName || shopBranding?.name || 'Inventory Avengers';
 
@@ -22,6 +23,8 @@ export function downloadReceiptPDF(sale, shopBranding, fmt) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.text(`Receipt #${sale.receiptNumber || sale._id || 'N/A'}`, 74, y, { align: 'center' });
+  y += 5;
+  doc.text(`Sale ID: ${saleId}`, 74, y, { align: 'center' });
   y += 5;
   doc.text(new Date(sale.createdAt || Date.now()).toLocaleString(), 74, y, { align: 'center' });
   y += 7;

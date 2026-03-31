@@ -15,6 +15,7 @@ export default function Sales() {
   const shopBranding = useAuthStore((s) => s.shopBranding);
   const currency = user?.currency || 'INR';
   const fmt = (v) => formatCurrency(v, currency);
+  const formatSaleId = (saleId) => saleId ? `#${String(saleId).slice(-8).toUpperCase()}` : 'N/A';
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -329,6 +330,7 @@ export default function Sales() {
               )}
               {shopBranding?.address && <div className="sales-receipt-address">{shopBranding.address}</div>}
               <div className="sales-receipt-id">Receipt #{lastSale.receiptNumber || lastSale._id}</div>
+              <div className="sales-receipt-id">Sale ID: {formatSaleId(lastSale._id)}</div>
               <div className="sales-receipt-date">{new Date(lastSale.createdAt || Date.now()).toLocaleString()}</div>
             </div>
             <div className="sales-receipt-meta"><strong>Customer:</strong> {lastSale.customerName || 'Walk-in'}</div>

@@ -35,12 +35,10 @@ export default function EmployeeManagement() {
   const [employees, setEmployees] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
-  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
   const [approveModal, setApproveModal] = useState(null);
   const [approveRole, setApproveRole] = useState('staff');
-  const [approveStoreId, setApproveStoreId] = useState('');
   const [saving, setSaving] = useState(false);
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
@@ -48,12 +46,8 @@ export default function EmployeeManagement() {
 
   const loadData = useCallback(async () => {
     try {
-      const [empData, storeData] = await Promise.all([
-        apiGet('/employees'),
-        apiGet('/stores'),
-      ]);
+      const empData = await apiGet('/employees');
       setEmployees(Array.isArray(empData) ? empData : (empData.data || []));
-      setStores(Array.isArray(storeData) ? storeData : []);
 
       if (isOwner || isManager) {
         try {
@@ -90,7 +84,6 @@ export default function EmployeeManagement() {
     try {
       await apiPut(`/approvals/users/${approveModal._id}/approve`, {
         role: approveRole,
-        storeId: approveStoreId || undefined,
       });
       showAlert('User approved successfully.', 'success');
       setApproveModal(null);
@@ -172,7 +165,7 @@ export default function EmployeeManagement() {
                         <td>
                           <div className="emp-mgmt-action-btns">
                             <button
-                              onClick={() => { setApproveModal(u); setApproveRole('staff'); setApproveStoreId(''); }}
+                              onClick={() => { setApproveModal(u); setApproveRole('staff'); }}
                               className="btn btn-success btn-sm"
                             >
                               <FiCheck size={12} /> Approve
@@ -329,15 +322,6 @@ export default function EmployeeManagement() {
                 <option value="manager">Manager</option>
               </select>
             </div>
-            {stores.length > 0 && (
-              <div>
-                <label className="form-label">Assign Store</label>
-                <select className="form-control" value={approveStoreId} onChange={(e) => setApproveStoreId(e.target.value)}>
-                  <option value="">— Select a store —</option>
-                  {stores.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-              </div>
-            )}
             <div className="emp-mgmt-approve-modal-footer">
               <button type="button" className="btn btn-secondary" onClick={() => setApproveModal(null)}>Cancel</button>
               <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Approving...' : 'Approve'}</button>

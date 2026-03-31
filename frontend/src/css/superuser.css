@@ -518,7 +518,7 @@
 }
 
 /* ---- New action buttons ---- */
-.superuser-btn--suspend  { background: #fef9c3; color: #78350f; }
+.superuser-btn--suspend  { background: #fef9c3; color: hwb(22 6% 53%); }
 .superuser-btn--suspend:hover  { background: #fde68a; }
-.superuser-btn--unsuspend  { background: #d1fae5; color: #065f46; }
-.superuser-btn--unsuspend:hover  { background: #a7f3d0; }
+.superuser-btn--unsuspend  { background: #d1fae5; color: oklab(43.181000000000004% -0.08424 0.01953); }
+.superuser-btn--unsuspend:hover  { background: rgb(167, 243, 208); }

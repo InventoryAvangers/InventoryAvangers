@@ -155,6 +155,22 @@ public class ReportsController : ControllerBase
         var sales   = salesTask.Result;
         var returns = returnsTask.Result;
 
+        var employeeIds = sales
+            .Select(s => s.EmployeeId)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct()
+            .ToList();
+        var employees = employeeIds.Count > 0
+            ? await _db.Users.Find(Builders<User>.Filter.In(u => u.Id, employeeIds)).ToListAsync()
+            : new List<User>();
+        var employeeMap = employees.ToDictionary(u => u.Id!, u => new
+        {
+            _id = u.Id,
+            name = string.IsNullOrWhiteSpace(u.DisplayName) ? u.Name : u.DisplayName,
+            u.Email,
+            u.Role
+        });
+
         var returnMap = returns.GroupBy(r => r.SaleId)
             .ToDictionary(g => g.Key, g => g.Sum(r => r.RefundAmount));
 
@@ -164,6 +180,9 @@ public class ReportsController : ControllerBase
             var returnStatus = returned > 0
                 ? (returned >= s.TotalAmount ? "returned" : "partial_return")
                 : (string?)null;
+            var employee = !string.IsNullOrWhiteSpace(s.EmployeeId) && employeeMap.TryGetValue(s.EmployeeId, out var foundEmployee)
+                ? foundEmployee
+                : null;
             return new
             {
                 _id = s.Id,
@@ -172,7 +191,7 @@ public class ReportsController : ControllerBase
                 s.Subtotal,
                 s.Tax,
                 s.PaymentMethod,
-                s.EmployeeId,
+                employeeId = employee,
                 s.CustomerName,
                 s.StoreId,
                 s.ReceiptNumber,
