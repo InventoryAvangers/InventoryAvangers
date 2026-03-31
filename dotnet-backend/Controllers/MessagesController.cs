@@ -62,6 +62,19 @@ public class MessagesController : ControllerBase
             ParentMessageId = req.ParentMessageId
         };
         await _db.Messages.InsertOneAsync(message);
+
+        // Create bell notification for the recipient
+        if (UserRole != "superuser" && !string.IsNullOrEmpty(recipientId))
+        {
+            await _db.Notifications.InsertOneAsync(new Notification
+            {
+                UserId  = recipientId,
+                Type    = "support_message",
+                Title   = "New Support Message",
+                Message = req.Subject
+            });
+        }
+
         return StatusCode(201, new { success = true, data = message });
     }
 

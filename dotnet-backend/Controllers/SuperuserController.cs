@@ -827,6 +827,17 @@ public class SuperuserController : ControllerBase
         if (msgs.Count > 0)
             await _db.Messages.InsertManyAsync(msgs);
 
+        // Create bell notifications for each recipient
+        var notifications = owners.Select(o => new Notification
+        {
+            UserId  = o.Id!,
+            Type    = "message",
+            Title   = "New Broadcast from Admin",
+            Message = req.Subject
+        }).ToList();
+        if (notifications.Count > 0)
+            await _db.Notifications.InsertManyAsync(notifications);
+
         await LogActivity("message.broadcast", null, null);
         return Ok(new { success = true, message = $"Broadcast sent to {owners.Count} owner(s)." });
     }
@@ -854,6 +865,15 @@ public class SuperuserController : ControllerBase
         };
         await _db.Messages.InsertOneAsync(msg);
 
+        // Create bell notification for the recipient
+        await _db.Notifications.InsertOneAsync(new Notification
+        {
+            UserId  = req.ToId!,
+            Type    = "message",
+            Title   = "New Message from Admin",
+            Message = req.Subject
+        });
+
         await LogActivity("message.sent", req.ToId, "user");
         return StatusCode(201, new { success = true, message = "Message sent.", data = msg });
     }
@@ -879,9 +899,7 @@ public class SuperuserController : ControllerBase
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
 
-        var filter = Builders<Message>.Filter.And(
-            Builders<Message>.Filter.Eq(m => m.ToRole, "superuser"),
-            Builders<Message>.Filter.Eq(m => m.ParentMessageId, (string?)null));
+        var filter = Builders<Message>.Filter.Eq(m => m.ToRole, "superuser");
 
         var messages = await _db.Messages.Find(filter)
             .SortByDescending(m => m.SentAt)

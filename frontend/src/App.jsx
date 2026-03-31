@@ -12,7 +12,6 @@ import Stores from './pages/Stores.jsx';
 import EmployeeManagement from './pages/EmployeeManagement.jsx';
 import EmployeeProfile from './pages/EmployeeProfile.jsx';
 import AuditLog from './pages/AuditLog.jsx';
-import ForbiddenPage from './pages/ForbiddenPage.jsx';
 import NoPermission from './pages/NoPermission.jsx';
 import Settings from './pages/Settings.jsx';
 import SuperuserPanel from './pages/SuperuserPanel.jsx';
@@ -34,7 +33,6 @@ export default function App() {
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/forbidden" element={<ForbiddenPage />} />
         <Route path="/no-permission" element={<NoPermission />} />
         <Route path="/" element={<Navigate to="/landing" replace />} />
 
