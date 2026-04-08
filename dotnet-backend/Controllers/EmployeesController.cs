@@ -78,6 +78,15 @@ public class EmployeesController : ControllerBase
         if (UserRole == "manager" && employee.StoreId != UserStoreId)
             return StatusCode(403, new { success = false, message = "Forbidden: cross-store access denied" });
 
+        // Populate storeId as an object
+        object? storeObj = null;
+        if (!string.IsNullOrWhiteSpace(employee.StoreId))
+        {
+            var store = await _db.Stores.Find(s => s.Id == employee.StoreId).FirstOrDefaultAsync();
+            if (store != null)
+                storeObj = new { _id = store.Id, name = store.Name, code = store.Code };
+        }
+
         return Ok(new { success = true, data = new
         {
             _id = employee.Id,
@@ -86,7 +95,9 @@ public class EmployeesController : ControllerBase
             employee.Email,
             employee.Role,
             employee.Status,
-            employee.StoreId
+            storeId = storeObj,
+            createdAt = employee.CreatedAt,
+            lastLogin = employee.LastLogin
         }});
     }
 
@@ -216,6 +227,38 @@ public class EmployeesController : ControllerBase
         });
 
         return Ok(new { success = true, message = "Employee suspended" });
+    }
+
+    // PUT /api/employees/:id/rehire
+    [HttpPut("{id}/rehire")]
+    public async Task<IActionResult> Rehire(string id)
+    {
+        if (UserRole != "owner") return StatusCode(403, new { success = false, message = "Forbidden" });
+
+        var employee = await _db.Users.Find(u => u.Id == id).FirstOrDefaultAsync();
+        if (employee == null) return NotFound(new { success = false, message = "Employee not found" });
+        if (employee.Status != "suspended")
+            return BadRequest(new { success = false, message = "Employee is not suspended" });
+
+        await _db.Users.UpdateOneAsync(u => u.Id == id, Builders<User>.Update.Set(u => u.Status, "approved"));
+
+        await _db.AuditLogs.InsertOneAsync(new AuditLog
+        {
+            ActorId = UserId!,
+            TargetId = id,
+            Action = "rehire_employee",
+            StoreId = employee.StoreId
+        });
+
+        await _db.Notifications.InsertOneAsync(new Notification
+        {
+            UserId = id,
+            Type = "status_change",
+            Title = "Account Reinstated",
+            Message = "Your account has been reinstated. You can now log in."
+        });
+
+        return Ok(new { success = true, message = "Employee reinstated successfully" });
     }
 
     // DELETE /api/employees/:id

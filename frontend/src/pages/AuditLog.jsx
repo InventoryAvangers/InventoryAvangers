@@ -16,31 +16,76 @@ import { fmtDate } from '../utils/helpers.js';
 import './AuditLog.css';
 
 const ACTION_LABELS = {
-  create_store: 'Created Store',
-  update_store: 'Updated Store',
-  delete_store: 'Deactivated Store',
-  assign_store_manager: 'Assigned Store Manager',
-  approve_user: 'Approved User',
-  reject_user: 'Rejected User',
-  promote_employee: 'Promoted Employee',
-  demote_employee: 'Demoted Employee',
-  transfer_employee: 'Transferred Employee',
-  suspend_employee: 'Suspended Employee',
-  remove_employee: 'Removed Employee',
-  change_password: 'Changed Password',
+  create_store:          'Created Store',
+  update_store:          'Updated Store',
+  delete_store:          'Deactivated Store',
+  assign_store_manager:  'Assigned Store Manager',
+  approve_user:          'Approved User',
+  reject_user:           'Rejected User',
+  promote_employee:      'Promoted Employee',
+  demote_employee:       'Demoted Employee',
+  transfer_employee:     'Transferred Employee',
+  suspend_employee:      'Suspended Employee',
+  remove_employee:       'Removed Employee',
+  rehire_employee:       'Reinstated Employee',
+  change_password:       'Changed Password',
+  create_product:        'Added Product',
+  update_product:        'Updated Product',
+  delete_product:        'Deleted Product',
+  create_sale:           'Processed Sale',
+  process_return:        'Processed Return',
+};
+
+const humanizeMetadata = (action, metadata) => {
+  if (!metadata) return null;
+
+  // Action-specific readable formats
+  if (action === 'promote_employee' && (metadata.from || metadata.to))
+    return `Promoted from ${metadata.from || '?'} to ${metadata.to || '?'}`;
+  if (action === 'demote_employee' && (metadata.from || metadata.to))
+    return `Demoted from ${metadata.from || '?'} to ${metadata.to || '?'}`;
+  if (action === 'transfer_employee')
+    return metadata.toStore ? `Transferred to "${metadata.toStore}"` : 'Transferred to new store';
+  if (action === 'create_product' && metadata.name)
+    return `Added "${metadata.name}" (qty: ${metadata.quantity ?? '?'})`;
+  if (action === 'update_product' && metadata.name)
+    return `Updated "${metadata.name}"`;
+  if (action === 'delete_product' && metadata.name)
+    return `Deleted "${metadata.name}"`;
+  if (action === 'process_return' && metadata.reason)
+    return `Qty: ${metadata.quantity ?? '?'} — Reason: ${metadata.reason}`;
+  if (action === 'suspend_employee' && metadata.reason)
+    return `Reason: ${metadata.reason}`;
+  if (action === 'remove_employee' && metadata.reason)
+    return `Reason: ${metadata.reason}`;
+  if (action === 'change_password')
+    return 'Password updated';
+  if (action === 'rehire_employee')
+    return 'Employee reinstated';
+
+  // Generic fallback: render all metadata fields as readable pairs
+  const pairs = Object.entries(metadata)
+    .filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => {
+      const key = k.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${v}`;
+    });
+  return pairs.length > 0 ? pairs.join(' · ') : null;
 };
 
 const formatDescription = (log) => {
   const actor = log.actorId?.name || 'System';
   const target = log.targetId?.name || '';
   const action = ACTION_LABELS[log.action] || log.action;
-  
-  if (log.action === 'create_store') return `${actor} created store`;
+  const meta = humanizeMetadata(log.action, log.metadata);
+
+  if (log.action === 'create_store') return `${actor} created a new store`;
   if (log.action === 'update_store') return `${actor} updated store settings`;
   if (log.action === 'approve_user') return `${actor} approved ${target}`;
   if (log.action === 'reject_user') return `${actor} rejected ${target}`;
-  if (target) return `${actor} ${action.toLowerCase()} ${target}`;
-  return `${actor} ${action.toLowerCase()}`;
+  if (meta) return `${actor}: ${meta}`;
+  if (target) return `${actor} — ${action.toLowerCase()} — ${target}`;
+  return `${actor} — ${action.toLowerCase()}`;
 };
 
 export default function AuditLog() {
@@ -144,8 +189,8 @@ export default function AuditLog() {
                         </div>
                       ) : '—'}
                     </td>
-                    <td className="audit-col-details" style={{ fontSize: '11px', color: '#64748b', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {log.metadata ? JSON.stringify(log.metadata) : '—'}
+                    <td className="audit-col-details" style={{ fontSize: '11px', color: '#64748b', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {humanizeMetadata(log.action, log.metadata) || '—'}
                     </td>
                   </tr>
                 ))}

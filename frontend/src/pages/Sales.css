@@ -41,6 +41,8 @@
 
 .sales-search-wrap .form-control {
   padding-left: 2.25rem;
+  color: var(--text-primary, #1e293b);
+  background-color: var(--bg-input, #ffffff);
 }
 
 .sales-category-select {

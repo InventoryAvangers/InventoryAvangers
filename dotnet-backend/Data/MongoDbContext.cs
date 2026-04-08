@@ -39,6 +39,7 @@ public class MongoDbContext
     public IMongoCollection<SuperuserRole> SuperuserRoles => _database.GetCollection<SuperuserRole>("superuserroles");
     public IMongoCollection<ActivityLog> ActivityLogs => _database.GetCollection<ActivityLog>("activitylogs");
     public IMongoCollection<Coupon> Coupons => _database.GetCollection<Coupon>("coupons");
+    public IMongoCollection<VacationRequest> VacationRequests => _database.GetCollection<VacationRequest>("vacationrequests");
 
     /// <summary>
     /// Creates all performance-critical indexes if they don't already exist.

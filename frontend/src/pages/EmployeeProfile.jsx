@@ -12,7 +12,7 @@ import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import Alert from '../components/ui/Alert.jsx';
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { RoleBadge } from '../components/ui/Badge.jsx';
-import { apiGet, apiErrMsg } from '../api/axios.js';
+import { apiGet, apiPut, apiErrMsg } from '../api/axios.js';
 import { fmtDate } from '../utils/helpers.js';
 import './EmployeeProfile.css';
 
@@ -30,15 +30,32 @@ export default function EmployeeProfile() {
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
+  const [rehiring, setRehiring] = useState(false);
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
 
-  useEffect(() => {
+  const loadEmployee = () => {
+    setLoading(true);
     apiGet(`/employees/${id}`)
       .then((data) => setEmployee(data.data || data))
       .catch((err) => showAlert(apiErrMsg(err)))
       .finally(() => setLoading(false));
-  }, [id]);
+  };
+
+  useEffect(() => { loadEmployee(); }, [id]);
+
+  const handleRehire = async () => {
+    setRehiring(true);
+    try {
+      await apiPut(`/employees/${id}/rehire`, {});
+      showAlert('Employee reinstated successfully.', 'success');
+      loadEmployee();
+    } catch (err) {
+      showAlert(apiErrMsg(err));
+    } finally {
+      setRehiring(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -95,6 +112,18 @@ export default function EmployeeProfile() {
               </div>
             )}
           </div>
+
+          {employee.status === 'suspended' && (
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #e2e8f0' }}>
+              <button
+                onClick={handleRehire}
+                disabled={rehiring}
+                className="btn btn-primary"
+              >
+                {rehiring ? 'Reinstating...' : '✅ Rehire Employee'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </DashboardLayout>

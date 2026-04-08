@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { FiSearch, FiRotateCcw } from 'react-icons/fi';
+import { FiSearch, FiRotateCcw, FiCheckSquare, FiSquare } from 'react-icons/fi';
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import Alert from '../components/ui/Alert.jsx';
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
@@ -9,10 +9,17 @@ import useAuthStore from '../store/authStore.js';
 
 import './Returns.css';
 
+const REASONS = [
+  { value: 'defective',   label: 'Defective (not restocked)' },
+  { value: 'wrong_item',  label: 'Wrong Item (restocked)' },
+  { value: 'others',      label: 'Others (restocked)' },
+];
+
 export default function Returns() {
   const user = useAuthStore((s) => s.user);
   const currency = user?.currency || 'INR';
   const fmt = (v) => formatCurrency(v, currency);
+
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
@@ -21,11 +28,8 @@ export default function Returns() {
   const [lookingUp, setLookingUp] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Return form state
-  const [returnProductId, setReturnProductId] = useState('');
-  const [returnQty, setReturnQty] = useState(1);
-  const [returnReason, setReturnReason] = useState('defective');
-  const [refundAmount, setRefundAmount] = useState('');
+  // Per-item return state: { [productId]: { checked, qty, reason, maxQty, price } }
+  const [itemReturns, setItemReturns] = useState({});
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
   const clearAlert = () => setAlert(null);
@@ -43,15 +47,6 @@ export default function Returns() {
 
   useEffect(() => { loadReturns(); }, [loadReturns]);
 
-  // Auto-calculate refund when product/qty changes
-  useEffect(() => {
-    if (!selectedSale || !returnProductId) return;
-    const item = selectedSale.items.find((i) => i.productId === returnProductId || i.productId?._id === returnProductId);
-    if (item) {
-      setRefundAmount((item.price * returnQty).toFixed(2));
-    }
-  }, [returnProductId, returnQty, selectedSale]);
-
   const lookupSale = async () => {
     const id = saleIdInput.trim();
     if (!id) return showAlert('Enter a Sale ID to look up.', 'warning');
@@ -63,12 +58,20 @@ export default function Returns() {
       );
       if (!found) return showAlert('Sale not found. Check the ID and try again.');
       setSelectedSale(found);
-      // Set default product
-      if (found.items?.length) {
-        const firstItem = found.items[0];
-        setReturnProductId(firstItem.productId?._id || firstItem.productId || '');
-        setReturnQty(1);
-      }
+      // Initialize per-item state
+      const init = {};
+      (found.items || []).forEach((item) => {
+        const pid = item.productId?._id || item.productId || '';
+        init[pid] = {
+          checked: false,
+          qty: 1,
+          reason: 'defective',
+          maxQty: item.qty,
+          price: item.price,
+          name: item.name,
+        };
+      });
+      setItemReturns(init);
     } catch (err) {
       showAlert(apiErrMsg(err));
     } finally {
@@ -76,31 +79,57 @@ export default function Returns() {
     }
   };
 
+  const toggleItem = (pid) =>
+    setItemReturns((prev) => ({ ...prev, [pid]: { ...prev[pid], checked: !prev[pid].checked } }));
+
+  const updateItem = (pid, field, value) =>
+    setItemReturns((prev) => ({ ...prev, [pid]: { ...prev[pid], [field]: value } }));
+
   const handleReturnSubmit = async (e) => {
     e.preventDefault();
     if (!selectedSale) return showAlert('Look up a sale first.');
+
+    const selected = Object.entries(itemReturns).filter(([, v]) => v.checked);
+    if (!selected.length) return showAlert('Select at least one item to return.', 'warning');
+
     setSubmitting(true);
-    try {
-      await apiPost('/returns', {
-        saleId: selectedSale._id,
-        productId: returnProductId,
-        quantity: returnQty,
-        reason: returnReason,
-        refundAmount: parseFloat(refundAmount),
-      });
-      showAlert('Return processed successfully. ' + (returnReason === 'defective' ? 'Item NOT restocked (Defective).' : 'Stock has been restocked.'), 'success');
-      setSelectedSale(null);
-      setSaleIdInput('');
-      setReturnProductId('');
-      setReturnQty(1);
-      setRefundAmount('');
-      await loadReturns();
-    } catch (err) {
-      showAlert(apiErrMsg(err));
-    } finally {
-      setSubmitting(false);
+    let successCount = 0;
+    const errors = [];
+    for (const [pid, item] of selected) {
+      try {
+        await apiPost('/returns', {
+          saleId: selectedSale._id,
+          productId: pid,
+          quantity: item.qty,
+          reason: item.reason,
+          refundAmount: parseFloat((item.price * item.qty).toFixed(2)),
+        });
+        successCount++;
+      } catch (err) {
+        errors.push(`${item.name}: ${apiErrMsg(err)}`);
+      }
     }
+
+    if (successCount > 0) {
+      showAlert(
+        `${successCount} item(s) returned successfully.${errors.length ? ' Some errors: ' + errors.join('; ') : ''}`,
+        errors.length ? 'warning' : 'success'
+      );
+    } else {
+      showAlert('Failed to process returns: ' + errors.join('; '));
+    }
+
+    setSelectedSale(null);
+    setSaleIdInput('');
+    setItemReturns({});
+    await loadReturns();
+    setSubmitting(false);
   };
+
+  const selectedCount = Object.values(itemReturns).filter((v) => v.checked).length;
+  const selectedRefund = Object.values(itemReturns)
+    .filter((v) => v.checked)
+    .reduce((sum, v) => sum + v.price * v.qty, 0);
 
   return (
     <DashboardLayout>
@@ -140,76 +169,100 @@ export default function Returns() {
           )}
 
           <form onSubmit={handleReturnSubmit} className="returns-form-fields">
-            <div>
-              <label className="form-label">Product</label>
-              <select
-                className="form-control"
-                value={returnProductId}
-                onChange={(e) => setReturnProductId(e.target.value)}
-                disabled={!selectedSale}
-                required
-              >
-                {!selectedSale ? (
-                  <option value="">-- Look up sale first --</option>
-                ) : (
-                  selectedSale.items.map((item) => {
-                    const pid = item.productId?._id || item.productId;
+            {selectedSale ? (
+              <>
+                <div style={{ fontSize: '13px', color: '#64748b', marginBottom: 4 }}>
+                  Select items to return:
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {selectedSale.items.map((item) => {
+                    const pid = item.productId?._id || item.productId || '';
+                    const row = itemReturns[pid];
+                    if (!row) return null;
                     return (
-                      <option key={pid} value={pid}>
-                        {item.name} ({item.qty} × {fmt(item.price)})
-                      </option>
+                      <div
+                        key={pid}
+                        style={{
+                          border: `1px solid ${row.checked ? '#4f46e5' : '#e2e8f0'}`,
+                          borderRadius: 8,
+                          padding: '10px 12px',
+                          background: row.checked ? '#f5f3ff' : '#fff',
+                          transition: 'border-color 0.15s',
+                        }}
+                      >
+                        {/* Item header: checkbox + name */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: row.checked ? 8 : 0 }}>
+                          <button
+                            type="button"
+                            onClick={() => toggleItem(pid)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: row.checked ? '#4f46e5' : '#94a3b8' }}
+                          >
+                            {row.checked ? <FiCheckSquare size={18} /> : <FiSquare size={18} />}
+                          </button>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: 13 }}>{item.name}</div>
+                            <div style={{ fontSize: 11, color: '#94a3b8' }}>
+                              Sold: {item.qty} × {fmt(item.price)} = {fmt(item.qty * item.price)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {row.checked && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, paddingTop: 4 }}>
+                            <div>
+                              <label className="form-label" style={{ fontSize: 11 }}>Qty to Return</label>
+                              <input
+                                type="number"
+                                className="form-control"
+                                min={1}
+                                max={row.maxQty}
+                                value={row.qty}
+                                onChange={(e) => updateItem(pid, 'qty', Math.min(parseInt(e.target.value) || 1, row.maxQty))}
+                                style={{ fontSize: 13 }}
+                              />
+                            </div>
+                            <div>
+                              <label className="form-label" style={{ fontSize: 11 }}>Reason</label>
+                              <select
+                                className="form-control"
+                                value={row.reason}
+                                onChange={(e) => updateItem(pid, 'reason', e.target.value)}
+                                style={{ fontSize: 13 }}
+                              >
+                                {REASONS.map((r) => (
+                                  <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div style={{ gridColumn: '1 / -1', fontSize: 12, color: '#4f46e5', fontWeight: 600 }}>
+                              Refund: {fmt(row.price * row.qty)}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     );
-                  })
+                  })}
+                </div>
+
+                {selectedCount > 0 && (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '10px 12px', fontSize: 13 }}>
+                    <strong>{selectedCount} item(s)</strong> selected — Total Refund: <strong>{fmt(selectedRefund)}</strong>
+                  </div>
                 )}
-              </select>
-            </div>
-
-            <div>
-              <label className="form-label">Quantity</label>
-              <input
-                type="number"
-                min="1"
-                className="form-control"
-                value={returnQty}
-                onChange={(e) => setReturnQty(parseInt(e.target.value) || 1)}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="form-label">Reason</label>
-              <select
-                className="form-control"
-                value={returnReason}
-                onChange={(e) => setReturnReason(e.target.value)}
-                required
-              >
-                <option value="defective">Defective (not restocked)</option>
-                <option value="wrong_item">Wrong Item (restocked)</option>
-                <option value="others">Others (restocked)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="form-label">Refund Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="form-control"
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
-                required
-              />
-            </div>
+              </>
+            ) : (
+              <div style={{ color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>
+                Look up a sale to select items for return
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={submitting || !selectedSale}
+              disabled={submitting || !selectedSale || selectedCount === 0}
               className="btn btn-primary returns-submit-btn"
             >
               {submitting && <span className="btn-spinner" />}
-              {submitting ? 'Processing...' : 'Process Return'}
+              {submitting ? 'Processing...' : `Process Return${selectedCount > 0 ? ` (${selectedCount} item${selectedCount > 1 ? 's' : ''})` : ''}`}
             </button>
           </form>
         </div>

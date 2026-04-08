@@ -165,12 +165,21 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
   const handleShopAction = async (id, action, body = {}) => {
     try {
       if (action === 'delete') {
-        if (!window.confirm('Permanently delete this shop and ALL its data? This cannot be undone.')) return;
-        await apiDelete(`/superuser/shops/${id}`);
-      } else {
-        await apiPatch(`/superuser/shops/${id}/${action}`, body);
+        setDeletingShopId(id);
+        return; // handled by inline reason prompt
       }
+      await apiPatch(`/superuser/shops/${id}/${action}`, body);
       showAlert(`Shop ${action} successful.`, 'success');
+      await loadData();
+      closeDetail();
+    } catch (err) { showAlert(apiErrMsg(err)); }
+  };
+
+  const confirmDeleteShop = async () => {
+    try {
+      await apiDelete(`/superuser/shops/${deletingShopId}`);
+      showAlert('Shop deleted.', 'success');
+      setDeletingShopId(null); setDeleteReason('');
       await loadData();
       closeDetail();
     } catch (err) { showAlert(apiErrMsg(err)); }
@@ -202,6 +211,10 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
     } catch (err) { showAlert(apiErrMsg(err)); }
   };
 
+  const [deletingShopId, setDeletingShopId] = useState(null);
+  const [deletingOwnerId, setDeletingOwnerId] = useState(null);
+  const [deleteReason, setDeleteReason] = useState('');
+
   const handleOwnerDeactivate = async (id) => {
     try { await apiPut(`/superuser/owners/${id}/deactivate`, {}); showAlert('Owner deactivated.', 'success'); await loadData(); }
     catch (err) { showAlert(apiErrMsg(err)); }
@@ -210,9 +223,8 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
     try { await apiPut(`/superuser/owners/${id}/activate`, {}); showAlert('Owner activated.', 'success'); await loadData(); }
     catch (err) { showAlert(apiErrMsg(err)); }
   };
-  const handleOwnerDelete = async (id, name) => {
-    if (!window.confirm(`Permanently delete owner "${name}"? This cannot be undone.`)) return;
-    try { await apiDelete(`/superuser/owners/${id}`); showAlert('Owner deleted.', 'success'); await loadData(); }
+  const handleOwnerDelete = async (id) => {
+    try { await apiDelete(`/superuser/owners/${id}`); showAlert('Owner deleted.', 'success'); setDeletingOwnerId(null); setDeleteReason(''); await loadData(); }
     catch (err) { showAlert(apiErrMsg(err)); }
   };
 
@@ -283,7 +295,7 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
               <div key={shop._id} className="superuser-shop-row" onClick={() => openShopDetail(shop._id)} style={{ cursor: 'pointer' }}>
                 <div className="superuser-owner-row__avatar">{shop.name?.[0]?.toUpperCase() || 'S'}</div>
                 <div className="superuser-owner-row__info">
-                  <div className="superuser-owner-row__name">{shop.name} <span style={{ fontSize: '11px', color: '#94a3b8' }}>({shop.code})</span></div>
+                  <div className="superuser-owner-row__name">{shop.name}</div>
                   <div className="superuser-owner-row__email">{shop.ownerId?.name} · {shop.ownerId?.email}</div>
                   <div className="superuser-owner-row__store">
                     {shop.trialExpiresAt && <span>Trial: {fmtDate(shop.trialExpiresAt)}</span>}
@@ -331,6 +343,23 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
                     }
                     <button className="superuser-btn superuser-btn--delete" onClick={() => handleShopAction(selectedShop, 'delete')}><FiTrash2 size={13} /> Delete</button>
                   </div>
+                  {deletingShopId === selectedShop && (
+                    <div style={{ marginTop: 8, padding: '12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#dc2626' }}>⚠️ Confirm permanent deletion</div>
+                      <textarea
+                        className="su-input"
+                        rows={2}
+                        placeholder="Reason for deletion (optional)"
+                        value={deleteReason}
+                        onChange={(e) => setDeleteReason(e.target.value)}
+                        style={{ width: '100%', resize: 'vertical', marginBottom: 8 }}
+                      />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="superuser-btn superuser-btn--delete" onClick={confirmDeleteShop}><FiTrash2 size={12} /> Confirm Delete</button>
+                        <button className="superuser-btn" onClick={() => { setDeletingShopId(null); setDeleteReason(''); }}>Cancel</button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="su-detail-section">Extend Trial</div>
                   <div className="su-inline-action">
@@ -376,21 +405,40 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
         <div className="superuser-card">
           <div className="superuser-card__header"><div className="superuser-card__title">Owner Accounts</div></div>
           {!owners.length ? <div className="superuser-empty">No owner accounts found.</div> : owners.map((o) => (
-            <div key={o._id} className="superuser-owner-row">
-              <div className="superuser-owner-row__avatar">{o.avatar || o.name?.[0]?.toUpperCase() || 'O'}</div>
-              <div className="superuser-owner-row__info">
-                <div className="superuser-owner-row__name">{o.displayName || o.name}</div>
-                <div className="superuser-owner-row__email">{o.email}</div>
-                {o.storeId && <div className="superuser-owner-row__store">🏪 {o.storeId.name} ({o.storeId.code})</div>}
+            <div key={o._id} className="superuser-owner-row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div className="superuser-owner-row__avatar">{o.avatar || o.name?.[0]?.toUpperCase() || 'O'}</div>
+                <div className="superuser-owner-row__info" style={{ flex: 1 }}>
+                  <div className="superuser-owner-row__name">{o.displayName || o.name}</div>
+                  <div className="superuser-owner-row__email">{o.email}</div>
+                  {o.storeId && <div className="superuser-owner-row__store">🏪 {o.storeId.name}{o.storeId?.code ? ` (${o.storeId.code})` : ''}</div>}
+                </div>
+                <StatusBadge status={o.status} />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {o.status === 'approved'
+                    ? <button className="superuser-btn superuser-btn--deactivate" onClick={() => handleOwnerDeactivate(o._id)}>Deactivate</button>
+                    : <button className="superuser-btn superuser-btn--activate" onClick={() => handleOwnerActivate(o._id)}>Activate</button>
+                  }
+                  <button className="superuser-btn superuser-btn--delete" onClick={() => setDeletingOwnerId(deletingOwnerId === o._id ? null : o._id)}><FiTrash2 size={13} /></button>
+                </div>
               </div>
-              <StatusBadge status={o.status} />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {o.status === 'approved'
-                  ? <button className="superuser-btn superuser-btn--deactivate" onClick={() => handleOwnerDeactivate(o._id)}>Deactivate</button>
-                  : <button className="superuser-btn superuser-btn--activate" onClick={() => handleOwnerActivate(o._id)}>Activate</button>
-                }
-                <button className="superuser-btn superuser-btn--delete" onClick={() => handleOwnerDelete(o._id, o.name)}><FiTrash2 size={13} /></button>
-              </div>
+              {deletingOwnerId === o._id && (
+                <div style={{ marginTop: 8, padding: '12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#dc2626' }}>⚠️ Confirm deletion of "{o.name}"</div>
+                  <textarea
+                    className="su-input"
+                    rows={2}
+                    placeholder="Reason for deletion (optional)"
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    style={{ width: '100%', resize: 'vertical', marginBottom: 8 }}
+                  />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="superuser-btn superuser-btn--delete" onClick={() => handleOwnerDelete(o._id)}><FiTrash2 size={12} /> Confirm Delete</button>
+                    <button className="superuser-btn" onClick={() => { setDeletingOwnerId(null); setDeleteReason(''); }}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -503,7 +551,6 @@ function LogsTab({ shops }) {
                     <td style={{ fontSize: '12px', color: '#64748b' }}>{l.storeId?.name || '—'}</td>
                     <td>
                       <div>{desc}</div>
-                      <code style={{ fontSize: '10px', background: '#f1f5f9', padding: '2px 4px', borderRadius: '4px', marginTop: '4px', display: 'inline-block' }}>{l.action}</code>
                     </td>
                     <td style={{ fontSize: '11px', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {l.metadata ? JSON.stringify(l.metadata) : '—'}
@@ -597,7 +644,7 @@ function CommunicationsTab({ owners, showAlert }) {
             <div className="superuser-request-row__info">
               <div className="superuser-request-row__name">{m.subject}</div>
               <div className="superuser-request-row__email">
-                {m.isBroadcast ? '�� Broadcast to all owners' : `→ ${m.toId?.name} (${m.toId?.email})`}
+                {m.isBroadcast ? '📢 Broadcast to all owners' : `→ ${m.toId?.name} (${m.toId?.email})`}
               </div>
               <div className="superuser-request-row__meta">{fmtDate(m.sentAt)}</div>
             </div>

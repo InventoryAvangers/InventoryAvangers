@@ -233,6 +233,15 @@ public class SuperuserController : ControllerBase
         var totalOrders   = await _db.Sales.CountDocumentsAsync(s => s.StoreId == id);
         var totalProducts = await _db.Products.CountDocumentsAsync(p => p.StoreId == id);
 
+        // Populate owner
+        object? ownerObj = null;
+        if (!string.IsNullOrWhiteSpace(store.OwnerId))
+        {
+            var owner = await _db.Users.Find(u => u.Id == store.OwnerId).FirstOrDefaultAsync();
+            if (owner != null)
+                ownerObj = new { _id = owner.Id, name = owner.Name, email = owner.Email, lastLogin = owner.LastLogin };
+        }
+
         return Ok(new { success = true, data = new {
             _id          = store.Id,
             store.Name,
@@ -242,7 +251,7 @@ public class SuperuserController : ControllerBase
             store.IsActive,
             store.TrialExpiresAt,
             store.SubscriptionExpiresAt,
-            store.OwnerId,
+            ownerId      = ownerObj,
             store.ManagerId,
             store.CreatedAt,
             trialDaysLeft = TrialStatusService.GetTrialDaysLeft(store),
@@ -505,15 +514,23 @@ public class SuperuserController : ControllerBase
         if (!string.IsNullOrWhiteSpace(storeId)) filter &= Builders<User>.Filter.Eq(u => u.StoreId, storeId);
 
         var users = await _db.Users.Find(filter).SortByDescending(u => u.CreatedAt).ToListAsync();
+
+        // Populate storeId objects
+        var storeIds = users.Select(u => u.StoreId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var stores   = await _db.Stores.Find(Builders<Store>.Filter.In(s => s.Id, storeIds)).ToListAsync();
+        var storeMap = stores.ToDictionary(s => s.Id!, s => new { _id = s.Id, name = s.Name, code = s.Code });
+
         var result = users.Select(u => new {
             _id = u.Id,
             u.Name,
             u.Email,
             u.Role,
             u.Status,
-            u.StoreId,
+            storeId  = u.StoreId != null && storeMap.TryGetValue(u.StoreId, out var st) ? (object)st : null,
             u.CreatedAt,
-            u.LastLogin
+            u.LastLogin,
+            u.DisplayName,
+            u.Avatar,
         });
         return Ok(new { success = true, data = result });
     }
@@ -778,6 +795,7 @@ public class SuperuserController : ControllerBase
     [HttpGet("logs")]
     public async Task<IActionResult> GetLogs([FromQuery] string? storeId, [FromQuery] string? action,
         [FromQuery] string? from, [FromQuery] string? to,
+        [FromQuery] string? actorRole,
         [FromQuery] int page = 1, [FromQuery] int limit = 50)
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
@@ -786,6 +804,7 @@ public class SuperuserController : ControllerBase
         if (!string.IsNullOrWhiteSpace(storeId)) filter &= Builders<ActivityLog>.Filter.Eq(l => l.StoreId, storeId);
         if (!string.IsNullOrWhiteSpace(action))
             filter &= Builders<ActivityLog>.Filter.Regex(l => l.Action, new MongoDB.Bson.BsonRegularExpression(action, "i"));
+        if (!string.IsNullOrWhiteSpace(actorRole)) filter &= Builders<ActivityLog>.Filter.Eq(l => l.ActorRole, actorRole);
         if (!string.IsNullOrWhiteSpace(from))
         {
             if (!DateTime.TryParse(from, out var fromDate))
@@ -946,7 +965,37 @@ public class SuperuserController : ControllerBase
             .Limit(200)
             .ToListAsync();
 
-        return Ok(new { success = true, data = messages });
+        // Populate fromId and storeId
+        var senderIds = messages.Select(m => m.FromId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var senders = await _db.Users.Find(Builders<User>.Filter.In(u => u.Id, senderIds)).ToListAsync();
+        var senderMap = senders.ToDictionary(u => u.Id!, u => new { _id = u.Id, name = u.Name, email = u.Email });
+
+        var storeIds = senders.Select(u => u.StoreId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var stores = await _db.Stores.Find(Builders<Store>.Filter.In(s => s.Id, storeIds)).ToListAsync();
+        var storeMap = stores.ToDictionary(s => s.Id!, s => new { _id = s.Id, name = s.Name });
+
+        var result = messages.Select(m =>
+        {
+            var sender = m.FromId != null && senderMap.TryGetValue(m.FromId, out var s) ? s : null;
+            var senderStore = sender != null && senders.FirstOrDefault(u => u.Id == m.FromId)?.StoreId is string sid
+                && storeMap.TryGetValue(sid, out var st) ? st : null;
+            return new
+            {
+                _id       = m.Id,
+                m.Subject,
+                m.Body,
+                m.SentAt,
+                m.Read,
+                m.IsBroadcast,
+                m.ParentMessageId,
+                fromId  = (object?)sender,
+                storeId = (object?)senderStore,
+                toId    = m.ToId,
+                toRole  = m.ToRole,
+            };
+        }).ToList();
+
+        return Ok(new { success = true, data = result });
     }
 
     // ── ROLES ──────────────────────────────────────────────────────────────

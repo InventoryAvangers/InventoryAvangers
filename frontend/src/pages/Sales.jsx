@@ -234,7 +234,36 @@ export default function Sales() {
                     >
                       <FiMinus size={10} />
                     </button>
-                    <span className="sales-cart-qty-value">{item.qty}</span>
+                    <input
+                      type="number"
+                      className="sales-cart-qty-value"
+                      value={item.qty}
+                      min={1}
+                      max={item.maxQty}
+                      onChange={(e) => {
+                        // Allow free typing — store raw value immediately
+                        const raw = e.target.value;
+                        if (raw === '' || raw === '-') return; // allow mid-edit empty
+                        const val = parseInt(raw, 10);
+                        if (isNaN(val)) return;
+                        const product = products.find((p) => p._id === item.productId);
+                        const max = product?.quantity ?? item.maxQty ?? 99;
+                        const clamped = Math.min(Math.max(1, val), max);
+                        setCart((prev) => prev.map((ci) =>
+                          ci.productId === item.productId ? { ...ci, qty: clamped } : ci
+                        ));
+                      }}
+                      onBlur={(e) => {
+                        // Commit: ensure value is at least 1
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val) || val < 1) {
+                          setCart((prev) => prev.map((ci) =>
+                            ci.productId === item.productId ? { ...ci, qty: 1 } : ci
+                          ));
+                        }
+                      }}
+                      style={{ width: '2.75rem', border: '1px solid #e2e8f0', borderRadius: '4px', textAlign: 'center', fontWeight: 700, fontSize: 'var(--font-size-sm)', background: '#fff', padding: '2px 0' }}
+                    />
                     <button
                       onClick={() => changeQty(item.productId, 1)}
                       className="sales-cart-qty-btn"

@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { FiUser, FiSettings, FiLogOut, FiSave, FiMoon, FiSun, FiShoppingBag } from 'react-icons/fi';
+import { useState, useEffect, useCallback } from 'react';
+import { FiUser, FiSettings, FiLogOut, FiSave, FiMoon, FiSun, FiShoppingBag, FiCalendar } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import Alert from '../components/ui/Alert.jsx';
-import { apiGet, apiPut, apiErrMsg } from '../api/axios.js';
+import { apiGet, apiPut, apiPost, apiErrMsg } from '../api/axios.js';
 import useAuthStore from '../store/authStore.js';
+import { fmtDate } from '../utils/helpers.js';
 import '../css/settings.css';
 
 const AVATARS = ['🧑', '👩', '👨', '🧔', '👩‍💼', '👨‍💼', '🧑‍💻', '👩‍💻', '👨‍💻', '🦸', '🧙', '🤵'];
@@ -34,6 +35,39 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
+
+  // Vacation request state (staff + manager only)
+  const isEmployee = authUser?.role === 'staff' || authUser?.role === 'manager';
+  const [vacations, setVacations] = useState([]);
+  const [vacForm, setVacForm] = useState({ startDate: '', endDate: '', reason: '' });
+  const [vacSubmitting, setVacSubmitting] = useState(false);
+
+  const loadVacations = useCallback(async () => {
+    if (!isEmployee) return;
+    try {
+      const data = await apiGet('/vacations/my');
+      setVacations(data.data || []);
+    } catch { /* ignore */ }
+  }, [isEmployee]);
+
+  useEffect(() => { loadVacations(); }, [loadVacations]);
+
+  const handleVacSubmit = async (e) => {
+    e.preventDefault();
+    if (!vacForm.startDate || !vacForm.endDate) return showAlert('Please select start and end dates.', 'warning');
+    if (new Date(vacForm.startDate) >= new Date(vacForm.endDate)) return showAlert('End date must be after start date.', 'warning');
+    setVacSubmitting(true);
+    try {
+      await apiPost('/vacations', { startDate: vacForm.startDate, endDate: vacForm.endDate, reason: vacForm.reason });
+      showAlert('Vacation request submitted. Your manager will review it shortly.', 'success');
+      setVacForm({ startDate: '', endDate: '', reason: '' });
+      loadVacations();
+    } catch (err) {
+      showAlert(apiErrMsg(err));
+    } finally {
+      setVacSubmitting(false);
+    }
+  };
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
   const clearAlert = () => setAlert(null);
@@ -247,6 +281,77 @@ export default function Settings() {
                   {brandingSaving ? 'Saving...' : 'Save Branding'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Vacation Requests (staff / manager only) ── */}
+        {isEmployee && (
+          <div className="settings-section">
+            <div className="settings-section__header">
+              <div className="settings-section__icon"><FiCalendar size={16} /></div>
+              <div className="settings-section__title">Vacation Requests</div>
+            </div>
+            <div className="settings-section__body">
+              <form onSubmit={handleVacSubmit}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+                  <div className="settings-form-row" style={{ marginBottom: 0 }}>
+                    <label>Start Date *</label>
+                    <input
+                      type="date"
+                      value={vacForm.startDate}
+                      min={new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => setVacForm({ ...vacForm, startDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="settings-form-row" style={{ marginBottom: 0 }}>
+                    <label>End Date *</label>
+                    <input
+                      type="date"
+                      value={vacForm.endDate}
+                      min={vacForm.startDate || new Date().toISOString().slice(0, 10)}
+                      onChange={(e) => setVacForm({ ...vacForm, endDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="settings-form-row">
+                  <label>Reason (optional)</label>
+                  <textarea
+                    value={vacForm.reason}
+                    onChange={(e) => setVacForm({ ...vacForm, reason: e.target.value })}
+                    placeholder="Brief reason for vacation request..."
+                    rows={2}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
+                <div className="settings-actions">
+                  <button type="submit" className="btn btn-primary" disabled={vacSubmitting}>
+                    <FiCalendar size={14} />{vacSubmitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
+                </div>
+              </form>
+
+              {vacations.length > 0 && (
+                <div style={{ marginTop: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 8 }}>Your Requests</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {vacations.map((v) => (
+                      <div key={v._id || v.Id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 13 }}>
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{fmtDate(v.startDate || v.StartDate)} → {fmtDate(v.endDate || v.EndDate)}</div>
+                          {(v.reason || v.Reason) && <div style={{ color: '#64748b', marginTop: 2 }}>{v.reason || v.Reason}</div>}
+                          {(v.reviewNote || v.ReviewNote) && <div style={{ color: '#94a3b8', marginTop: 2, fontStyle: 'italic' }}>Note: {v.reviewNote || v.ReviewNote}</div>}
+                        </div>
+                        <span className={`badge ${{ pending: 'badge-warning', approved: 'badge-success', declined: 'badge-danger' }[(v.status || v.Status)] || 'badge-gray'}`}>
+                          {v.status || v.Status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

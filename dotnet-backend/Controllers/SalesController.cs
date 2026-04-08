@@ -91,6 +91,55 @@ public class SalesController : ControllerBase
         };
         await _db.Sales.InsertOneAsync(sale);
 
+        // 3d: Low stock notifications — check each product after stock is decremented
+        foreach (var item in req.Items)
+        {
+            if (!string.IsNullOrWhiteSpace(storeId))
+            {
+                var inv = await _db.Inventories
+                    .Find(i => i.ProductId == item.ProductId && i.StoreId == storeId)
+                    .FirstOrDefaultAsync();
+                var product = await _db.Products.Find(p => p.Id == item.ProductId).FirstOrDefaultAsync();
+                if (inv != null && product != null && inv.Quantity <= product.Threshold && product.Threshold > 0)
+                {
+                    // Notify owner of the store
+                    var store = await _db.Stores.Find(s => s.Id == storeId).FirstOrDefaultAsync();
+                    if (store?.OwnerId != null)
+                    {
+                        await _db.Notifications.InsertOneAsync(new Notification
+                        {
+                            UserId  = store.OwnerId,
+                            Type    = "low_stock",
+                            Title   = "Low Stock Alert",
+                            Message = $"\"{product.Name}\" is running low ({inv.Quantity} units remaining)."
+                        });
+                    }
+                }
+            }
+            else
+            {
+                var product = await _db.Products.Find(p => p.Id == item.ProductId).FirstOrDefaultAsync();
+                if (product != null && product.Quantity <= product.Threshold && product.Threshold > 0)
+                {
+                    // Find owner of the store associated with this product
+                    if (!string.IsNullOrWhiteSpace(product.StoreId))
+                    {
+                        var store = await _db.Stores.Find(s => s.Id == product.StoreId).FirstOrDefaultAsync();
+                        if (store?.OwnerId != null)
+                        {
+                            await _db.Notifications.InsertOneAsync(new Notification
+                            {
+                                UserId  = store.OwnerId,
+                                Type    = "low_stock",
+                                Title   = "Low Stock Alert",
+                                Message = $"\"{product.Name}\" is running low ({product.Quantity} units remaining)."
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
         return StatusCode(201, sale);
     }
 

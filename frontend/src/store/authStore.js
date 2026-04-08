@@ -121,7 +121,9 @@ const useAuthStore = create((set, get) => ({
   setAuth: (token, user) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    set({ token, user, isAuthenticated: true, featureFlagsLoaded: false });
+    set({ token, user, isAuthenticated: true });
+    // Refresh flags so AppRoute doesn't stay stuck at FullPageLoader
+    get().refreshFeatureFlags();
   },
 
   setShopBranding: (branding) => {

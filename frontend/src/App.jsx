@@ -17,6 +17,7 @@ import NoPermission from './pages/NoPermission.jsx';
 import Settings from './pages/Settings.jsx';
 import SuperuserPanel from './pages/SuperuserPanel.jsx';
 import SupportMessages from './pages/SupportMessages.jsx';
+import VacationRequests from './pages/VacationRequests.jsx';
 import useAuthStore from './store/authStore.js';
 import FullPageLoader from './components/ui/FullPageLoader.jsx';
 
@@ -71,6 +72,7 @@ export default function App() {
         <Route path="/audit-log" element={<AppRoute roles={['owner']}><AuditLog /></AppRoute>} />
         <Route path="/employees" element={<AppRoute roles={['owner', 'manager']} feature="employees"><EmployeeManagement /></AppRoute>} />
         <Route path="/employees/:id" element={<AppRoute roles={['owner', 'manager']} feature="employees"><EmployeeProfile /></AppRoute>} />
+        <Route path="/vacations" element={<AppRoute roles={['owner', 'manager']}><VacationRequests /></AppRoute>} />
         <Route path="/user-approvals" element={<Navigate to="/employees" replace />} />
 
         {/* Catch-all */}

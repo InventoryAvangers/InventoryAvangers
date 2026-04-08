@@ -44,8 +44,10 @@ export default function Login() {
       const data = await login(email.trim(), password);
       if (data.user?.role === 'superuser') {
         navigate('/superuser', { replace: true });
+      } else if (data.user?.role === 'staff') {
+        navigate('/inventory', { replace: true });
       } else {
-        navigate('/', { replace: true });
+        navigate('/dashboard', { replace: true });
       }
     } catch (err) {
       showAlert(apiErrMsg(err));
