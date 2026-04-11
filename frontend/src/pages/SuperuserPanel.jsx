@@ -545,15 +545,23 @@ function LogsTab({ shops }) {
                   details = `Plan → ${l.metadata?.plan || '—'}`;
                 } else if (l.action === 'shop.trial_extended') {
                   details = `+${l.metadata?.days || '?'} days`;
-                } else if (l.action === 'feature_flags.updated' && l.metadata?.features) {
-                  const flags = Object.entries(l.metadata.features)
-                    .map(([k, v]) => `${k}: ${v ? 'on' : 'off'}`)
-                    .join(', ');
-                  details = flags || 'Flags updated';
+                } else if (l.action === 'feature_flags.updated') {
+                  if (l.metadata?.features) {
+                    const flags = Object.entries(l.metadata.features)
+                      .map(([k, v]) => `${k}: ${v ? 'on' : 'off'}`)
+                      .join(', ');
+                    details = flags || 'Feature flags updated';
+                  } else {
+                    details = 'Feature flags updated';
+                  }
                 } else if (l.action === 'message.broadcast') {
                   details = 'Sent to all owners';
                 } else if (l.action === 'message.sent') {
                   details = 'Direct message sent';
+                } else if (l.action === 'owner.activated') {
+                  details = 'Owner access restored';
+                } else if (l.action === 'owner.deactivated') {
+                  details = 'Owner access suspended';
                 } else if (l.action === 'shop.approved') {
                   details = 'Shop activated';
                 } else if (l.action === 'shop.rejected') {
@@ -564,6 +572,7 @@ function LogsTab({ shops }) {
                 } else if (l.action === 'shop.unsuspended') {
                   details = 'Access restored';
                 }
+
 
 
                 return (
