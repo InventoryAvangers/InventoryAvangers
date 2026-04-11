@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   FiMapPin, FiUser, FiUsers, FiDollarSign, FiTrendingUp,
-  FiShoppingBag, FiShoppingCart, FiPackage, FiAlertTriangle, FiRefreshCw,
+  FiShoppingBag, FiShoppingCart, FiPackage, FiAlertTriangle, FiRefreshCw, FiSearch,
 } from 'react-icons/fi';
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
@@ -26,6 +26,7 @@ export default function Stores() {
   const [loadingStores, setLoadingStores] = useState(true);
   const [loadingStats, setLoadingStats] = useState(false);
   const [alert, setAlert] = useState(null);
+  const [storeSearch, setStoreSearch] = useState('');
 
   const loadStores = useCallback(async () => {
     try {
@@ -120,13 +121,30 @@ export default function Stores() {
             <h3 className="stores-list-title">
               <FiMapPin size={15} /> Stores
             </h3>
+            {/* Search box */}
+            <div style={{ padding: '0 0 8px', position: 'relative' }}>
+              <FiSearch size={13} style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+              <input
+                className="form-control"
+                placeholder="Search stores..."
+                value={storeSearch}
+                onChange={(e) => setStoreSearch(e.target.value)}
+                style={{ paddingLeft: '2rem', fontSize: '0.8125rem' }}
+              />
+            </div>
             {loadingStores ? (
               <LoadingSpinner />
             ) : stores.length === 0 ? (
               <p className="stores-no-stores">No stores available</p>
             ) : (
               <div className="stores-list-items">
-                {stores.map((store) => (
+                {stores
+                  .filter((s) =>
+                    !storeSearch ||
+                    s.name?.toLowerCase().includes(storeSearch.toLowerCase()) ||
+                    s.code?.toLowerCase().includes(storeSearch.toLowerCase())
+                  )
+                  .map((store) => (
                   <button
                     key={store._id}
                     onClick={() => handleSelectStore(store)}

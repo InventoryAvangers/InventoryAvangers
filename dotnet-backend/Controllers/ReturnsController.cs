@@ -111,6 +111,29 @@ public class ReturnsController : ControllerBase
             .SortByDescending(r => r.CreatedAt)
             .ToListAsync();
 
-        return Ok(returns);
+        // Batch-populate product names
+        var productIds = returns.Select(r => r.ProductId).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var products   = await _db.Products.Find(Builders<Product>.Filter.In(p => p.Id, productIds)).ToListAsync();
+        var productMap = products.ToDictionary(p => p.Id!, p => new { _id = p.Id, name = p.Name });
+
+        // Batch-populate processedBy user names
+        var userIds = returns.Select(r => r.ProcessedBy).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList();
+        var users   = await _db.Users.Find(Builders<User>.Filter.In(u => u.Id, userIds)).ToListAsync();
+        var userMap = users.ToDictionary(u => u.Id!, u => new { _id = u.Id, name = u.Name });
+
+        var result = returns.Select(r => new
+        {
+            _id         = r.Id,
+            saleId      = r.SaleId,
+            productId   = r.ProductId != null && productMap.TryGetValue(r.ProductId, out var prod) ? (object)prod : r.ProductId,
+            storeId     = r.StoreId,
+            quantity    = r.Quantity,
+            reason      = r.Reason,
+            refundAmount = r.RefundAmount,
+            processedBy = r.ProcessedBy != null && userMap.TryGetValue(r.ProcessedBy, out var usr) ? (object)usr : r.ProcessedBy,
+            createdAt   = r.CreatedAt
+        });
+
+        return Ok(result);
     }
 }

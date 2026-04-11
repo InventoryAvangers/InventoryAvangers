@@ -223,6 +223,7 @@ public class EmployeesController : ControllerBase
             ActorId = UserId!,
             TargetId = id,
             Action = "suspend_employee",
+            Metadata = new { status = "suspended", role = employee.Role },
             StoreId = employee.StoreId
         });
 
@@ -247,6 +248,7 @@ public class EmployeesController : ControllerBase
             ActorId = UserId!,
             TargetId = id,
             Action = "rehire_employee",
+            Metadata = new { status = "approved", role = employee.Role },
             StoreId = employee.StoreId
         });
 

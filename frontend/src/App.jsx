@@ -49,7 +49,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/no-permission" element={<NoPermission />} />
-        <Route path="/" element={<RedirectToHome />} />
+        <Route path="/" element={<CatchAll />} />
 
         <Route path="/approvals" element={<Navigate to="/employees" replace />} />
 

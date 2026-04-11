@@ -177,7 +177,7 @@ function ShopsTab({ showAlert, loadData, requests, owners, shops }) {
 
   const confirmDeleteShop = async () => {
     try {
-      await apiDelete(`/superuser/shops/${deletingShopId}`);
+      await apiDelete(`/superuser/shops/${deletingShopId}`, { reason: deleteReason.trim() || undefined });
       showAlert('Shop deleted.', 'success');
       setDeletingShopId(null); setDeleteReason('');
       await loadData();
@@ -503,7 +503,7 @@ function LogsTab({ shops }) {
         <input className="su-input" placeholder="Filter by action..." value={filters.action} onChange={(e) => setFilters({ ...filters, action: e.target.value })} style={{ flex: 1 }} />
         <select className="su-filter-select" value={filters.actorRole} onChange={(e) => setFilters({ ...filters, actorRole: e.target.value })}>
           <option value="">All Roles</option>
-          {['superuser', 'owner', 'manager', 'staff', 'system'].map((r) => <option key={r} value={r}>{r}</option>)}
+          {['superuser', 'owner', 'manager', 'staff'].map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
         <input type="date" className="su-input" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} style={{ width: '140px' }} />
         <input type="date" className="su-input" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} style={{ width: '140px' }} />
@@ -526,13 +526,45 @@ function LogsTab({ shops }) {
                 if (l.action === 'shop.rejected') desc = 'Rejected shop';
                 if (l.action === 'shop.suspended') desc = 'Suspended shop';
                 if (l.action === 'shop.unsuspended') desc = 'Unsuspended shop';
-                if (l.action === 'shop.deleted') desc = `Deleted shop ${l.metadata?.storeName}`;
+                if (l.action === 'shop.deleted') desc = `Deleted shop: ${l.metadata?.storeName || '—'}`;
                 if (l.action === 'feature_flags.updated') desc = 'Updated feature flags';
                 if (l.action === 'owner.deactivated') desc = 'Deactivated owner access';
                 if (l.action === 'owner.activated') desc = 'Activated owner access';
                 if (l.action === 'owner.deleted') desc = 'Deleted owner account';
                 if (l.action === 'coupon.created') desc = 'Created new coupon';
                 if (l.action === 'coupon.deleted') desc = 'Deleted coupon';
+                if (l.action === 'message.broadcast') desc = 'Sent broadcast to all owners';
+                if (l.action === 'message.sent') desc = 'Sent direct message';
+
+                // Build a human-readable details string
+                let details = '—';
+                if (l.action === 'shop.deleted') {
+                  const reason = l.metadata?.reason;
+                  details = reason ? `Reason: ${reason}` : 'No reason provided';
+                } else if (l.action === 'shop.plan_overridden') {
+                  details = `Plan → ${l.metadata?.plan || '—'}`;
+                } else if (l.action === 'shop.trial_extended') {
+                  details = `+${l.metadata?.days || '?'} days`;
+                } else if (l.action === 'feature_flags.updated' && l.metadata?.features) {
+                  const flags = Object.entries(l.metadata.features)
+                    .map(([k, v]) => `${k}: ${v ? 'on' : 'off'}`)
+                    .join(', ');
+                  details = flags || 'Flags updated';
+                } else if (l.action === 'message.broadcast') {
+                  details = 'Sent to all owners';
+                } else if (l.action === 'message.sent') {
+                  details = 'Direct message sent';
+                } else if (l.action === 'shop.approved') {
+                  details = 'Shop activated';
+                } else if (l.action === 'shop.rejected') {
+                  const reason = l.metadata?.reason;
+                  details = reason ? `Reason: ${reason}` : 'No reason given';
+                } else if (l.action === 'shop.suspended') {
+                  details = 'Temporarily suspended';
+                } else if (l.action === 'shop.unsuspended') {
+                  details = 'Access restored';
+                }
+
 
                 return (
                   <tr key={l._id}>
@@ -552,8 +584,8 @@ function LogsTab({ shops }) {
                     <td>
                       <div>{desc}</div>
                     </td>
-                    <td style={{ fontSize: '11px', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {l.metadata ? JSON.stringify(l.metadata) : '—'}
+                    <td style={{ fontSize: '12px', color: '#475569' }}>
+                      {details}
                     </td>
                   </tr>
                 );

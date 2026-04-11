@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { FiSearch, FiShoppingCart, FiX, FiPlus, FiMinus, FiTrash2, FiFileText } from 'react-icons/fi';
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import Modal from '../components/ui/Modal.jsx';
@@ -29,6 +29,7 @@ export default function Sales() {
   const [lastSale, setLastSale] = useState(null);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const searchRef = useRef(null);
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
   const clearAlert = () => setAlert(null);
@@ -153,10 +154,12 @@ export default function Sales() {
         <div className="sales-products-panel">
           {/* Filters */}
           <div className="sales-filters">
-            <div className="sales-search-wrap">
-              <FiSearch className="sales-search-icon" size={15} />
+            <div className="sales-search-wrap" onClick={() => searchRef.current?.focus()}>
+              <FiSearch size={14} className="sales-search-icon" />
               <input
-                className="form-control"
+                ref={searchRef}
+                type="text"
+                className="sales-search-input"
                 placeholder="Search products..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}

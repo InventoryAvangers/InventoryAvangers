@@ -343,7 +343,7 @@ public class SuperuserController : ControllerBase
 
     // DELETE /api/superuser/shops/:id
     [HttpDelete("shops/{id}")]
-    public async Task<IActionResult> DeleteShop(string id)
+    public async Task<IActionResult> DeleteShop(string id, [FromBody] RejectRequest? req)
     {
         if (ForbidIfNotSuperuser() is { } f) return f;
 
@@ -359,7 +359,7 @@ public class SuperuserController : ControllerBase
             _db.Stores.DeleteOneAsync(s => s.Id == id)
         );
 
-        await LogActivity("shop.deleted", null, "store", new { storeName = store.Name, storeId = id });
+        await LogActivity("shop.deleted", null, "store", new { storeName = store.Name, storeId = id, reason = req?.Reason ?? "" });
         return Ok(new { success = true, message = "Shop and all associated data permanently deleted." });
     }
 
@@ -649,7 +649,7 @@ public class SuperuserController : ControllerBase
                 .Set(f => f.UpdatedAt, DateTime.UtcNow),
             new FindOneAndUpdateOptions<FeatureFlag> { ReturnDocument = ReturnDocument.After, IsUpsert = true });
 
-        await LogActivity("feature_flags.updated", storeId, "store");
+        await LogActivity("feature_flags.updated", storeId, "store", new { features = req.Features });
         return Ok(new { success = true, message = "Feature flags updated.", data = result });
     }
 

@@ -5,7 +5,7 @@
  * Only accessible to users with the owner role.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { FiMapPin, FiPlus, FiEdit2, FiTrash2, FiUser, FiUsers } from 'react-icons/fi';
+import { FiMapPin, FiPlus, FiEdit2, FiTrash2, FiUser, FiUsers, FiSearch } from 'react-icons/fi';
 import DashboardLayout from '../components/layout/DashboardLayout.jsx';
 import Modal from '../components/ui/Modal.jsx';
 import Alert from '../components/ui/Alert.jsx';
@@ -27,6 +27,7 @@ export default function OwnerStores() {
   const [selectedManagerId, setSelectedManagerId] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
 
   const showAlert = (message, type = 'error') => setAlert({ message, type });
   const clearAlert = () => setAlert(null);
@@ -134,9 +135,21 @@ export default function OwnerStores() {
           <h2 className="owner-stores-page-title">Stores</h2>
           <p className="owner-stores-page-subtitle">Manage all store locations</p>
         </div>
-        <button onClick={openCreate} className="btn btn-primary">
-          <FiPlus size={15} /> New Store
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <FiSearch size={14} style={{ position: 'absolute', left: '0.6rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+            <input
+              className="form-control"
+              placeholder="Search stores..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ paddingLeft: '2rem', width: '200px' }}
+            />
+          </div>
+          <button onClick={openCreate} className="btn btn-primary">
+            <FiPlus size={15} /> New Store
+          </button>
+        </div>
       </div>
 
       {alert && <Alert message={alert.message} type={alert.type} onClose={clearAlert} />}
@@ -148,9 +161,18 @@ export default function OwnerStores() {
           <FiMapPin size={40} className="owner-stores-empty-icon" />
           <p className="owner-stores-empty-text">No stores yet. Create your first store.</p>
         </div>
-      ) : (
-        <div className="owner-stores-grid">
-          {stores.map((store) => (
+      ) : (() => {
+        const filtered = stores.filter((s) =>
+          !search ||
+          s.name?.toLowerCase().includes(search.toLowerCase()) ||
+          s.code?.toLowerCase().includes(search.toLowerCase()) ||
+          s.address?.toLowerCase().includes(search.toLowerCase())
+        );
+        return (
+          <div className="owner-stores-grid">
+            {filtered.length === 0 ? (
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>No stores match your search.</p>
+            ) : filtered.map((store) => (
             <div key={store._id} className="card owner-store-card">
               <div className="owner-store-card-header">
                 <div>
@@ -193,9 +215,10 @@ export default function OwnerStores() {
                 </button>
               </div>
             </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Create/Edit Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editStore ? 'Edit Store' : 'New Store'}>

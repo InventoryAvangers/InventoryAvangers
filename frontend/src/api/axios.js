@@ -80,7 +80,7 @@ export const apiGet = (url, params) => {
 export const apiPost   = (url, data)   => api.post(url, data).then((r) => r.data);
 export const apiPut    = (url, data)   => api.put(url, data).then((r) => r.data);
 export const apiPatch  = (url, data)   => api.patch(url, data).then((r) => r.data);
-export const apiDelete = (url)         => api.delete(url).then((r) => r.data);
+export const apiDelete = (url, data)   => api.delete(url, { data }).then((r) => r.data);
 
 /** Extract a human-readable error message from an Axios error, with an optional custom fallback */
 export const apiErrMsg = (err, fallback = 'An unexpected error occurred.') =>

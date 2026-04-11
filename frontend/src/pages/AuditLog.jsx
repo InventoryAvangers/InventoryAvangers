@@ -37,6 +37,21 @@ const ACTION_LABELS = {
 };
 
 const humanizeMetadata = (action, metadata) => {
+  // Action-specific readable formats that don't need metadata
+  if (action === 'suspend_employee') {
+    if (metadata?.role) return `Suspended (was ${metadata.role})`;
+    return 'Access suspended';
+  }
+  if (action === 'rehire_employee') {
+    if (metadata?.role) return `Reinstated as ${metadata.role}`;
+    return 'Employee reinstated';
+  }
+  if (action === 'remove_employee') {
+    if (metadata?.reason) return `Reason: ${metadata.reason}`;
+    return 'Employee removed';
+  }
+  if (action === 'change_password') return 'Password updated';
+
   if (!metadata) return null;
 
   // Action-specific readable formats
@@ -54,14 +69,6 @@ const humanizeMetadata = (action, metadata) => {
     return `Deleted "${metadata.name}"`;
   if (action === 'process_return' && metadata.reason)
     return `Qty: ${metadata.quantity ?? '?'} — Reason: ${metadata.reason}`;
-  if (action === 'suspend_employee' && metadata.reason)
-    return `Reason: ${metadata.reason}`;
-  if (action === 'remove_employee' && metadata.reason)
-    return `Reason: ${metadata.reason}`;
-  if (action === 'change_password')
-    return 'Password updated';
-  if (action === 'rehire_employee')
-    return 'Employee reinstated';
 
   // Generic fallback: render all metadata fields as readable pairs
   const pairs = Object.entries(metadata)
