@@ -7,7 +7,6 @@ import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { apiGet, apiPost, apiErrMsg } from '../api/axios.js';
 import useAuthStore from '../store/authStore.js';
 import { formatCurrency } from '../utils/helpers.js';
-import { downloadReceiptPDF } from '../utils/receipt.js';
 import './Sales.css';
 
 export default function Sales() {
@@ -138,11 +137,6 @@ export default function Sales() {
     } finally {
       setProcessing(false);
     }
-  };
-
-  // Receipt PDF — uses shared utility
-  const handleDownloadReceiptPDF = () => {
-    downloadReceiptPDF(lastSale, shopBranding, fmt);
   };
 
   return (
@@ -341,9 +335,6 @@ export default function Sales() {
             <button onClick={() => setReceiptModalOpen(true)} className="btn btn-outline">
               <FiFileText size={15} /> View Receipt
             </button>
-            <button onClick={handleDownloadReceiptPDF} className="btn btn-outline">
-              Download PDF
-            </button>
             <button onClick={() => setSuccessModalOpen(false)} className="btn btn-primary">
               New Sale
             </button>
@@ -399,10 +390,7 @@ export default function Sales() {
               <div className="sales-receipt-footer-msg">{shopBranding.receiptFooter}</div>
             )}
             <div className="sales-receipt-actions">
-              <button onClick={handleDownloadReceiptPDF} className="btn btn-primary sales-checkout-btn">
-                Download PDF
-              </button>
-              <button onClick={() => window.print()} className="btn btn-outline">Print</button>
+              <button onClick={() => window.print()} className="btn btn-primary sales-checkout-btn">Print</button>
             </div>
           </div>
         )}

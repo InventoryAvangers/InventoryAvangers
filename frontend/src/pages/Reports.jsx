@@ -7,7 +7,7 @@ import Card from '../components/ui/Card.jsx';
 import LoadingSpinner from '../components/ui/LoadingSpinner.jsx';
 import { apiGet, apiErrMsg } from '../api/axios.js';
 import useAuthStore from '../store/authStore.js';
-import { fmtDate, formatCurrency } from '../utils/helpers.js';
+import { fmtDate, formatCurrency, formatPdfCurrency } from '../utils/helpers.js';
 
 import { downloadReceiptPDF } from '../utils/receipt.js';
 import './Reports.css';
@@ -35,6 +35,7 @@ export default function Reports() {
   const isStaff = user?.role === 'staff';
   const currency = user?.currency || 'INR';
   const fmt = (v) => formatCurrency(v, currency);
+  const pdfFmt = (v) => formatPdfCurrency(v, currency);
 
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -98,7 +99,7 @@ export default function Reports() {
     doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
     const reportShopName = shopBranding?.shopName || shopBranding?.name || 'Inventory Avengers';
-    doc.text(`${reportShopName} — Sales Report`, margin, y); y += 8;
+    doc.text(`${reportShopName} - Sales Report`, margin, y); y += 8;
 
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
@@ -118,11 +119,11 @@ export default function Reports() {
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
       const summaryRows = [
-        ['Gross Revenue', fmt(summary.grossRevenue ?? summary.totalRevenue)],
-        ['Total Returned', fmt(summary.totalReturned ?? 0)],
-        ['Net Revenue', fmt(summary.totalRevenue)],
+        ['Gross Revenue', pdfFmt(summary.grossRevenue ?? summary.totalRevenue)],
+        ['Total Returned', pdfFmt(summary.totalReturned ?? 0)],
+        ['Net Revenue', pdfFmt(summary.totalRevenue)],
         ['Total Orders', String(summary.totalOrders)],
-        ['Estimated Profit', fmt(summary.totalProfit)],
+        ['Estimated Profit', pdfFmt(summary.totalProfit)],
         ['Profit Margin', `${summary.profitMargin}%`],
       ];
       summaryRows.forEach(([k, v]) => {
@@ -163,7 +164,7 @@ export default function Reports() {
       }
       doc.text('#' + s._id.slice(-8).toUpperCase(), cols[0], y);
       doc.text((s.customerName || 'Walk-in').slice(0, 18), cols[1], y);
-      doc.text(fmt(s.totalAmount), cols[2], y);
+      doc.text(pdfFmt(s.totalAmount), cols[2], y);
       doc.text((s.paymentMethod || '').toUpperCase(), cols[3], y);
       doc.text((s.employeeId?.name || 'N/A').slice(0, 14), cols[4], y);
       doc.text(new Date(s.createdAt).toLocaleDateString(), cols[5], y);
@@ -181,10 +182,10 @@ export default function Reports() {
 
       doc.setFontSize(10);
       doc.setFont(undefined, 'normal');
-      doc.text(`Gross Revenue: ${fmt(summary.grossRevenue ?? summary.totalRevenue)}`, margin, y); y += 6;
-      doc.text(`Total Returned: ${fmt(summary.totalReturned ?? 0)}`, margin, y); y += 6;
-      doc.text(`Net Revenue: ${fmt(summary.totalRevenue)}`, margin, y); y += 6;
-      doc.text(`Estimated Profit: ${fmt(summary.totalProfit)}`, margin, y); y += 6;
+      doc.text(`Gross Revenue: ${pdfFmt(summary.grossRevenue ?? summary.totalRevenue)}`, margin, y); y += 6;
+      doc.text(`Total Returned: ${pdfFmt(summary.totalReturned ?? 0)}`, margin, y); y += 6;
+      doc.text(`Net Revenue: ${pdfFmt(summary.totalRevenue)}`, margin, y); y += 6;
+      doc.text(`Estimated Profit: ${pdfFmt(summary.totalProfit)}`, margin, y); y += 6;
       doc.text(`Profit Margin: ${summary.profitMargin}%`, margin, y); y += 6;
     }
 

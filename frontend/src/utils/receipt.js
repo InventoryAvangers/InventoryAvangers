@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { formatPdfCurrency } from './helpers.js';
 
 /**
  * Generate and download a PDF receipt for a given sale.
@@ -13,6 +14,7 @@ export function downloadReceiptPDF(sale, shopBranding, fmt) {
   const margin = 10;
   let y = margin;
   const saleId = sale._id ? `#${String(sale._id).slice(-8).toUpperCase()}` : 'N/A';
+  const pdfFmt = (value) => formatPdfCurrency(value, sale?.currency || shopBranding?.currency || 'INR');
 
   const shopName = shopBranding?.shopName || shopBranding?.name || 'Inventory Avengers';
 
@@ -45,8 +47,8 @@ export function downloadReceiptPDF(sale, shopBranding, fmt) {
   for (const it of (sale.items || [])) {
     doc.text(String(it.name).substring(0, 30), margin, y);
     doc.text(String(it.qty), 90, y, { align: 'right' });
-    doc.text(fmt(it.price), 114, y, { align: 'right' });
-    doc.text(fmt(it.price * it.qty), 138, y, { align: 'right' });
+    doc.text(pdfFmt(it.price), 114, y, { align: 'right' });
+    doc.text(pdfFmt(it.price * it.qty), 138, y, { align: 'right' });
     y += 5;
   }
   y += 2;
@@ -56,11 +58,11 @@ export function downloadReceiptPDF(sale, shopBranding, fmt) {
   doc.setFontSize(9);
   // subtotal is stored on the sale; fall back to totalAmount when missing (tax is 0 in this system)
   const subtotal = sale.subtotal || sale.totalAmount;
-  doc.text(`Subtotal: ${fmt(subtotal)}`, 138, y, { align: 'right' }); y += 5;
-  doc.text(`Tax: ${fmt(sale.tax || 0)}`, 138, y, { align: 'right' }); y += 5;
+  doc.text(`Subtotal: ${pdfFmt(subtotal)}`, 138, y, { align: 'right' }); y += 5;
+  doc.text(`Tax: ${pdfFmt(sale.tax || 0)}`, 138, y, { align: 'right' }); y += 5;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
-  doc.text(`Total: ${fmt(sale.totalAmount)}`, 138, y, { align: 'right' }); y += 8;
+  doc.text(`Total: ${pdfFmt(sale.totalAmount)}`, 138, y, { align: 'right' }); y += 8;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   const footerMsg = shopBranding?.receiptFooter || 'Thank you for your purchase!';

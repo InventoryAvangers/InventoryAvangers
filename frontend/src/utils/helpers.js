@@ -19,6 +19,24 @@ export function formatCurrency(amount, currencyCode = 'INR') {
   });
 }
 
+export function formatPdfCurrency(amount, currencyCode = 'INR') {
+  const code = currencyCode || 'INR';
+  const symbols = {
+    INR: 'Rs.',
+    USD: '$',
+    EUR: 'EUR',
+    GBP: 'GBP',
+    CAD: 'CAD',
+  };
+
+  const numeric = Number(amount || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  return `${symbols[code] || code} ${numeric}`;
+}
+
 export function fmtDate(d) {
   return new Date(d).toLocaleString('en-CA', {
     month: 'short',
