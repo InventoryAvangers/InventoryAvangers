@@ -23,7 +23,7 @@ import FullPageLoader from './components/ui/FullPageLoader.jsx';
 
 function CatchAll() {
   const { isAuthenticated, user, featureFlagsLoaded, hasFeature } = useAuthStore();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/landing" replace />;
   if (!featureFlagsLoaded) return <FullPageLoader />;
   if (user?.role === 'staff') {
     if (hasFeature('inventory')) return <Navigate to="/inventory" replace />;
